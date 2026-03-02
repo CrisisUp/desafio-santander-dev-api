@@ -1,0 +1,21 @@
+services:
+  santander-api:
+    build: .
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/swagger-ui/index.html"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  etl-pipeline:
+    build: ./etl-pipeline
+    depends_on:
+      santander-api:
+        condition: service_healthy # O "pulo do gato" está aqui
+    environment:
+      - API_URL=http://santander-api:8080
+    volumes:
+      - ./etl-pipeline/data:/app/data

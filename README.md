@@ -1,22 +1,32 @@
-# Santander Dev Week 2023 Java API
+# Santander Dev Week 2026 - API & ETL Pipeline
 
-RESTful API da Santander Dev Week 2023 construída em Java 17 com Spring Boot 3.
+Esta é uma evolução do projeto original da Santander Dev Week, agora integrando uma RESTful API robusta em Java com um Pipeline de Dados (ETL) inteligente em Python.
 
-## Principais Tecnologias
- - **Java 17**: Utilizaremos a versão LTS mais recente do Java para tirar vantagem das últimas inovações que essa linguagem robusta e amplamente utilizada oferece;
- - **Spring Boot 3**: Trabalharemos com a mais nova versão do Spring Boot, que maximiza a produtividade do desenvolvedor por meio de sua poderosa premissa de autoconfiguração;
- - **Spring Data JPA**: Exploraremos como essa ferramenta pode simplificar nossa camada de acesso aos dados, facilitando a integração com bancos de dados SQL;
- - **OpenAPI (Swagger)**: Vamos criar uma documentação de API eficaz e fácil de entender usando a OpenAPI (Swagger), perfeitamente alinhada com a alta produtividade que o Spring Boot oferece;
- - **Railway**: facilita o deploy e monitoramento de nossas soluções na nuvem, além de oferecer diversos bancos de dados como serviço e pipelines de CI/CD.
+## 🚀 Novidades desta Versão (DevOps & Data)
 
-## [Link do Figma](https://www.figma.com/file/0ZsjwjsYlYd3timxqMWlbj/SANTANDER---Projeto-Web%2FMobile?type=design&node-id=1421%3A432&mode=design&t=6dPQuerScEQH0zAn-1)
+Diferente da versão original, este repositório foca na automação de dados e resiliência de infraestrutura:
 
-O Figma foi utilizado para a abstração do domínio desta API, sendo útil na análise e projeto da solução.
+* **Ambiente M4 & Java 21:** Configuração otimizada para o chip Apple M4, utilizando Java 21 (LTS) para garantir compatibilidade total com o Spring Boot 3.4.
 
-## Diagrama de Classes (Domínio da API)
+* **Data Seeding Automatizado:** Script Python para população em massa do banco de dados H2, permitindo testes de carga e processamento em lote.
 
-```mermaid
-classDiagram
+* **Pipeline ETL:** Extração automatizada de dados da API, transformação de mensagens de marketing (segmentação de saldo) e carregamento em arquivos de saída JSON.
+
+## 🛠️ Tecnologias Utilizadas
+
+* **Java 21 & Spring Boot 3:** Backend robusto com Spring Data JPA.
+
+* **Python 3.14:** Engine do pipeline ETL utilizando as bibliotecas requests e pandas.
+
+* **OpenAPI (Swagger):** Documentação interativa disponível em <http://localhost:8080/swagger-ui.html>.
+
+* **H2 Database:** Banco de dados em memória para desenvolvimento ágil.
+
+## 📊 Domínio da API (Diagrama de Classes)
+
+Snippet de código
+
+```classDiagram
   class User {
     -String name
     -Account account
@@ -24,43 +34,69 @@ classDiagram
     -Card card
     -News[] news
   }
-
   class Account {
     -String number
     -String agency
     -Number balance
     -Number limit
   }
-
   class Feature {
     -String icon
     -String description
   }
-
   class Card {
     -String number
     -Number limit
   }
-
   class News {
     -String icon
     -String description
   }
-
   User "1" *-- "1" Account
   User "1" *-- "N" Feature
   User "1" *-- "1" Card
   User "1" *-- "N" News
 ```
 
-## Documentação da API (Swagger)
+## 📖 Como Executar o Projeto
 
-### [https://sdw-2023-prd.up.railway.app/swagger-ui.html](https://sdw-2023-prd.up.railway.app/swagger-ui.html)
+### 1. Backend (Java)
 
-Esta API ficará disponível no Railway por um período de tempo limitado, mas este é um código-fonte aberto. Portanto, sintam-se à vontade para cloná-lo, modificá-lo (já que é um bom projeto base para novos projetos) e executar localmente ou onde achar mais interessante! Só não esquece de marcar a gente quando divulgar a sua solução 🥰
+Certifique-se de estar usando o `JDK 21`:
 
-### IMPORTANTE
+```Bash
+./gradlew clean bootRun
+```
 
-Aos interessados no desenvolvimento da tela inicial do App do Santander (Figma) em Angular, Android, iOS ou Flutter... Caso a URL produtiva não esteja mais disponível, deixamos um Backup no GitHub Pages, é só dar um GET lá 😘
-- URL de Produção: https://sdw-2023-prd.up.railway.app/users/1
-- Mock (Backup): https://digitalinnovationone.github.io/santander-dev-week-2023-api/mocks/find_one.json
+### 2. Pipeline ETL (Python)
+
+Navegue até a pasta etl-pipeline, ative o ambiente virtual e execute o processamento:
+
+```Bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python populate_api.py
+python main.py
+```
+
+## Via Docker (Recomendado) 🚀
+
+Esta opção orquestra automaticamente a API e o Pipeline, garantindo resiliência através de healthchecks.
+
+Pré-requisitos: Docker Desktop instalado.
+
+Gerar o artefato Java:
+Na raiz do projeto, gere o JAR otimizado para o container:
+
+```Bash
+gradle clean bootJar
+```
+
+Subir o ecossistema:
+
+```Bash
+docker-compose up --build
+```
+
+O pipeline irá aguardar a API ficar saudável, popular os dados e executar o ETL automaticamente.

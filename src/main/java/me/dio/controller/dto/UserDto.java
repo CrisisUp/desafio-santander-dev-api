@@ -1,7 +1,7 @@
 package me.dio.controller.dto;
 
 import me.dio.domain.model.User;
-
+import me.dio.domain.model.Card;
 import java.util.List;
 
 import static java.util.Collections.emptyList;

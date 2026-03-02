@@ -1,12 +1,18 @@
 plugins {
   id 'java'
-  id 'org.springframework.boot' version '3.1.1'
-  id 'io.spring.dependency-management' version '1.1.0'
+  id 'org.springframework.boot' version '3.4.3' 
+  id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'me.dio'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+    toolchain {
+        // Alinhando com o Java 21 (LTS) que você possui
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
 repositories {
   mavenCentral()
@@ -15,18 +21,12 @@ repositories {
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
-
+  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+  
   runtimeOnly 'com.h2database:h2'
   runtimeOnly 'org.postgresql:postgresql'
   
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-
-tasks.jar {
-  manifest {
-    attributes["Main-Class"] = "me.dio.Application"
-  }
 }
 
 tasks.named('test') {
