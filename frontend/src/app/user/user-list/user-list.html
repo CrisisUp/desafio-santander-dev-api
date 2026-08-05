@@ -23,14 +23,23 @@
     <ng-container *ngIf="searchTerm"> — resultados para "{{ searchTerm }}"</ng-container>
   </p>
 
-  <mat-spinner *ngIf="loading" diameter="40" class="list-spinner"></mat-spinner>
+  <div *ngIf="loading" class="skeleton-list" aria-label="Carregando usuários">
+    <div class="skeleton-row" *ngFor="let row of [0, 1, 2, 3, 4]">
+      <div class="skeleton-block" style="width: 25%"></div>
+      <div class="skeleton-block" style="width: 12%"></div>
+      <div class="skeleton-block" style="width: 12%"></div>
+      <div class="skeleton-block" style="width: 15%"></div>
+      <div class="skeleton-block" style="width: 20%"></div>
+      <div class="skeleton-block" style="width: 10%"></div>
+    </div>
+  </div>
 
   <mat-table [dataSource]="users" matSort (matSortChange)="onSortChange($event)" class="users-table" *ngIf="!loading && users.length > 0">
     <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Nome</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header matTooltip="Nome do usuário">Nome</mat-header-cell>
       <mat-cell *matCellDef="let user">
         {{ user.name }}
-        <mat-icon *ngIf="isProtected(user)" title="Usuário protegido (ID 1)" class="lock-icon">lock</mat-icon>
+        <mat-icon *ngIf="isProtected(user)" matTooltip="Usuário protegido (ID 1)" class="lock-icon">lock</mat-icon>
       </mat-cell>
     </ng-container>
 
@@ -45,8 +54,12 @@
     </ng-container>
 
     <ng-container matColumnDef="balance">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Saldo</mat-header-cell>
-      <mat-cell *matCellDef="let user">{{ user.account.balance | currency: 'BRL' }}</mat-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header matTooltip="Saldo da conta">Saldo</mat-header-cell>
+      <mat-cell *matCellDef="let user" [class.balance-negative]="user.account.balance < 0"
+                [class.balance-positive]="user.account.balance >= 0"
+                matTooltip="Saldo da conta">
+        {{ user.account.balance | currency: 'BRL' }}
+      </mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="card">
@@ -95,5 +108,11 @@
   <div *ngIf="!loading && users.length === 0" class="empty-state">
     <mat-icon class="empty-icon">search_off</mat-icon>
     <p>{{ searchTerm ? 'Nenhum usuário encontrado para "' + searchTerm + '".' : 'Nenhum usuário cadastrado.' }}</p>
+    <button mat-raised-button color="primary" *ngIf="searchTerm" (click)="onSearch('')">
+      <mat-icon>filter_alt_off</mat-icon> Limpar filtro
+    </button>
+    <button mat-raised-button color="primary" routerLink="/users/new" *ngIf="!searchTerm">
+      <mat-icon>person_add</mat-icon> Novo usuário
+    </button>
   </div>
 </div>

@@ -6,6 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -36,6 +37,7 @@ import { ConfirmDialogComponent } from './user/confirm-dialog/confirm-dialog';
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
+    MatTooltipModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,

@@ -38,3 +38,13 @@ body {
   background-color: #fafafa;
   height: 100%;
 }
+
+// Success snackbar (green background) for post-save feedback.
+.snack-success {
+  background: #2e7d32;
+  color: #fff;
+
+  .mat-mdc-snack-bar-action {
+    color: #fff;
+  }
+}

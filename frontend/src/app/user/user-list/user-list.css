@@ -27,8 +27,8 @@
   margin: 4px 0 12px;
 }
 
-.list-spinner {
-  margin: 24px auto;
+.skeleton-list {
+  margin-bottom: 16px;
 }
 
 .users-table {
@@ -41,6 +41,42 @@
   color: rgba(0, 0, 0, 0.38);
   margin-left: 6px;
   vertical-align: middle;
+}
+
+.balance-positive {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.balance-negative {
+  color: #c62828;
+  font-weight: 500;
+}
+
+/* Loading skeletons for the table rows. */
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.skeleton-block {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .empty-state {

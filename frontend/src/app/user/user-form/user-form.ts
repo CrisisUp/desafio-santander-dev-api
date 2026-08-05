@@ -122,12 +122,9 @@ export class UserFormComponent implements OnInit {
 
     request.subscribe({
       next: () => {
-        this.snackBar.open(
-          this.isEdit ? 'Usuário atualizado.' : 'Usuário criado.',
-          'OK',
-          { duration: 3000 }
-        );
-        this.router.navigate(['/users']);
+        const msg = this.isEdit ? '✓ Usuário atualizado.' : '✓ Usuário criado.';
+        this.snackBar.open(msg, 'OK', { duration: 3000, panelClass: 'snack-success' });
+        this.router.navigate(['/users']).then(() => window.scrollTo(0, 0));
       },
       error: (err: Error) => {
         this.saving = false;
