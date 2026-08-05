@@ -53,3 +53,53 @@ jobs:
         run: npm run test:ci
       - name: Build (production)
         run: npm run build -- --configuration=production
+
+  integration:
+    name: Integration (Docker Compose)
+    runs-on: ubuntu-latest
+    needs: [backend, etl, frontend]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build JAR (required by the API image)
+        run: ./gradlew clean bootJar --no-daemon
+      - name: Start the full stack
+        run: docker compose up --build -d
+      - name: Wait for API healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "OK: API healthy"; exit 0
+            fi
+            sleep 5
+          done
+          echo "FAIL: API did not become healthy"; exit 1
+      - name: Wait for ETL to finish
+        run: |
+          for i in $(seq 1 24); do
+            state=$(docker compose ps -a --format '{{.State}}' etl-pipeline 2>/dev/null || true)
+            if [ "$state" = "exited" ]; then
+              echo "OK: ETL finished"; exit 0
+            fi
+            sleep 5
+          done
+          echo "FAIL: ETL did not finish"; exit 1
+      - name: Validate end-to-end
+        run: |
+          curl -sf http://localhost:4200/ | grep -q "Santander Dev Week" \
+            || { echo "FAIL: frontend title missing"; exit 1; }
+          curl -sf "http://localhost:4200/users?page=0&size=5" | grep -q "Devweekerson" \
+            || { echo "FAIL: proxy/seed missing"; exit 1; }
+          ls etl-pipeline/data/output/user_*_updated.json >/dev/null 2>&1 \
+            || { echo "FAIL: ETL output missing"; exit 1; }
+          echo "OK: Integration validated end-to-end"
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs || true
+      - name: Teardown
+        if: always()
+        run: docker compose down -v || true
