@@ -49,6 +49,15 @@ class UserServiceTest {
     }
 
     @Test
+    void create_rejectsBlankName() {
+        User user = newUser("acct-bn", "card-bn");
+        user.setName("   ");
+        assertThatThrownBy(() -> userService.create(user))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("name");
+    }
+
+    @Test
     void create_rejectsNullUser() {
         assertThatThrownBy(() -> userService.create(null))
                 .isInstanceOf(BusinessException.class);

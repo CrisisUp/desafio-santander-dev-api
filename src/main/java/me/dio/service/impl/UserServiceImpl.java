@@ -64,6 +64,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User create(User userToCreate) {
         ofNullable(userToCreate).orElseThrow(() -> new BusinessException("User to create must not be null."));
+        ofNullable(userToCreate.getName()).filter(name -> !name.isBlank())
+                .orElseThrow(() -> new BusinessException("User name must not be blank."));
         ofNullable(userToCreate.getAccount()).orElseThrow(() -> new BusinessException("User account must not be null."));
         ofNullable(userToCreate.getCard()).orElseThrow(() -> new BusinessException("User card must not be null."));
 
