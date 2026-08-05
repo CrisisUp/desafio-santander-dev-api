@@ -1,0 +1,40 @@
+// Santander brand theme (primary red #EC0000) for Angular Material.
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+// Start from Material's official M3 red palette (structure guaranteed valid)
+// and override the key tones to the Santander brand red (#EC0000).
+$santander-palette: map.deep-merge(
+  mat.$red-palette,
+  (
+    40: #ec0000,
+    50: #ec0000,
+    60: #d40000,
+  )
+);
+
+$theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: $santander-palette,
+    ),
+    typography: (
+      plain-family: Roboto,
+      brand-family: Roboto,
+    ),
+  )
+);
+
+@include mat.all-component-themes($theme);
+
+// Base styles.
+html,
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background-color: #fafafa;
+  height: 100%;
+}

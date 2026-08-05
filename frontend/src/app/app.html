@@ -1,6 +1,8 @@
-<mat-toolbar color="primary">
-  <span class="app-title">{{ title }}</span>
-  <a mat-button routerLink="/users" class="nav-link">Usuários</a>
+<mat-toolbar color="primary" class="app-toolbar">
+  <span class="app-title">Santander</span>
+  <span class="app-subtitle">Dev Week</span>
+  <span class="toolbar-spacer"></span>
+  <a mat-button routerLink="/users" class="nav-link" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">Usuários</a>
 </mat-toolbar>
 
 <router-outlet></router-outlet>

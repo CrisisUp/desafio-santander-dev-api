@@ -26,6 +26,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.app-title')?.textContent).toContain('Santander Dev Week');
+    expect(compiled.querySelector('.app-title')?.textContent).toContain('Santander');
+    expect(compiled.querySelector('.app-subtitle')?.textContent).toContain('Dev Week');
   });
 });
