@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { UserService } from '../user.service';
 import { User } from '../user';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
@@ -21,17 +23,30 @@ export class UserListComponent implements OnInit {
   pageSize = 10;
   pageIndex = 0;
   loading = false;
+  searchTerm = '';
+  private searchSubject = new Subject<string>();
 
-  displayedColumns = ['name', 'account', 'balance', 'limit', 'actions'];
+  displayedColumns = ['name', 'agency', 'account', 'balance', 'card', 'extra', 'actions'];
 
   constructor(
     private userService: UserService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-  ) {}
+  ) {
+    // Debounced search: fires 300ms after the user stops typing.
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex = 0;
+      this.loadUsers();
+    });
+  }
 
   ngOnInit(): void {
     this.loadUsers();
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm = value;
+    this.searchSubject.next(value);
   }
 
   onPageChange(event: PageEvent): void {
@@ -42,7 +57,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
-    this.userService.list(this.pageIndex, this.pageSize).subscribe({
+    this.userService.list(this.pageIndex, this.pageSize, this.searchTerm).subscribe({
       next: (page) => {
         this.users = page.content;
         this.totalElements = page.totalElements;
@@ -61,7 +76,11 @@ export class UserListComponent implements OnInit {
 
   confirmDelete(user: User): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: { message: `Excluir o usuário "${user.name}"?` },
+      data: {
+        title: 'Excluir usuário',
+        message: `Excluir o usuário "${user.name}"?`,
+        confirmLabel: 'Excluir',
+      },
     });
     dialogRef.afterClosed().subscribe((confirmed: boolean) => {
       if (confirmed && user.id !== undefined) {

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -28,12 +29,12 @@ import java.util.stream.Collectors;
 public record UserController(UserService userService) {
 
     @GetMapping
-    @Operation(summary = "Get all users", description = "Retrieve a paged list of all registered users")
+    @Operation(summary = "Get all users", description = "Retrieve a paged list of all registered users (optionally filtered by name)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operation successful")
     })
-    public ResponseEntity<Page<UserDto>> findAll(Pageable pageable) {
-        var users = userService.findAll(pageable);
+    public ResponseEntity<Page<UserDto>> findAll(@RequestParam(required = false) String name, Pageable pageable) {
+        var users = userService.findAll(name, pageable);
         var usersDto = users.map(UserDto::new);
         return ResponseEntity.ok(usersDto);
     }

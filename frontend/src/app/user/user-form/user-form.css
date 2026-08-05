@@ -42,4 +42,11 @@ mat-form-field {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.submit-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
 }

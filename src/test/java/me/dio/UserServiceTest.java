@@ -111,6 +111,21 @@ class UserServiceTest {
     }
 
     @Test
+    void findAll_filtersByNameIgnoringCase() {
+        // Create, then rename to a distinctive name so the search has a target.
+        User target = userService.create(newUser("find-me-acct", "find-me-card"));
+        target.setName("FINDABLE Name");
+        userService.update(target.getId(), target);
+
+        var matches = userService.findAll("findable", PageRequest.of(0, 20));
+        assertThat(matches.getContent()).anyMatch(u -> u.getName().equals("FINDABLE Name"));
+        assertThat(matches.getTotalElements()).isGreaterThanOrEqualTo(1);
+
+        var noMatch = userService.findAll("zzz-nonexistent-zzz", PageRequest.of(0, 20));
+        assertThat(noMatch.getTotalElements()).isZero();
+    }
+
+    @Test
     void findAll_returnsPaginatedResults() {
         userService.create(newUser("page-1", "page-1"));
         userService.create(newUser("page-2", "page-2"));

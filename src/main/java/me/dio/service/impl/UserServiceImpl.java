@@ -47,6 +47,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<User> findAll(String name, Pageable pageable) {
+        if (name == null || name.isBlank()) {
+            return this.findAll(pageable);
+        }
+        return this.userRepository.findByNameContainingIgnoreCase(name.trim(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public User findById(Long id) {
         return this.userRepository.findById(id).orElseThrow(NotFoundException::new);
     }

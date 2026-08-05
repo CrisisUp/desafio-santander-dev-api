@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { UserService } from '../user.service';
@@ -63,6 +63,11 @@ export class UserFormComponent implements OnInit {
 
   get news(): FormArray {
     return this.form.get('news') as FormArray;
+  }
+
+  /** Shows a per-field validation message when the control is invalid and touched. */
+  showError(control: AbstractControl | null): boolean {
+    return !!control && control.invalid && control.touched;
   }
 
   addFeature(): FormGroup {

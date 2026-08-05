@@ -28,6 +28,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = {"account", "card", "features", "news"})
     Page<User> findAll(Pageable pageable);
 
+    // Search by name (case-insensitive, partial) with the full aggregate loaded.
+    @EntityGraph(attributePaths = {"account", "card", "features", "news"})
+    Page<User> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
     @Override
     @EntityGraph(attributePaths = {"account", "card", "features", "news"})
     Optional<User> findById(Long id);

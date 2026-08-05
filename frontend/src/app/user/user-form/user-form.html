@@ -3,26 +3,31 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="user-form">
     <mat-form-field appearance="outline">
-      <mat-label>Nome</mat-label>
-      <input matInput formControlName="name" placeholder="Nome completo" />
+      <mat-label>Nome *</mat-label>
+      <input matInput formControlName="name" placeholder="Nome completo" autofocus />
+      <mat-error *ngIf="showError(form.get('name'))">Nome é obrigatório.</mat-error>
     </mat-form-field>
 
     <fieldset formGroupName="account" class="section">
       <legend>Conta</legend>
       <mat-form-field appearance="outline">
-        <mat-label>Número</mat-label>
+        <mat-label>Número *</mat-label>
         <input matInput formControlName="number" placeholder="0000" />
+        <mat-error *ngIf="showError(form.get('account.number'))">Número é obrigatório.</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Agência</mat-label>
+        <mat-label>Agência *</mat-label>
         <input matInput formControlName="agency" placeholder="0001" />
+        <mat-error *ngIf="showError(form.get('account.agency'))">Agência é obrigatória.</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Saldo</mat-label>
+        <span matTextPrefix>R$&nbsp;</span>
         <input matInput type="number" formControlName="balance" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Limite</mat-label>
+        <span matTextPrefix>R$&nbsp;</span>
         <input matInput type="number" formControlName="limit" />
       </mat-form-field>
     </fieldset>
@@ -30,11 +35,13 @@
     <fieldset formGroupName="card" class="section">
       <legend>Cartão</legend>
       <mat-form-field appearance="outline">
-        <mat-label>Número</mat-label>
+        <mat-label>Número *</mat-label>
         <input matInput formControlName="number" placeholder="**** **** **** 0000" />
+        <mat-error *ngIf="showError(form.get('card.number'))">Número é obrigatório.</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Limite</mat-label>
+        <span matTextPrefix>R$&nbsp;</span>
         <input matInput type="number" formControlName="limit" />
       </mat-form-field>
     </fieldset>
@@ -77,9 +84,11 @@
 
     <div class="actions">
       <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving">
+        <mat-icon *ngIf="!saving">save</mat-icon>
+        <mat-spinner *ngIf="saving" diameter="18" class="submit-spinner"></mat-spinner>
         {{ saving ? 'Salvando…' : 'Salvar' }}
       </button>
-      <button mat-button type="button" routerLink="/users">Cancelar</button>
+      <button mat-button type="button" routerLink="/users" [disabled]="saving">Cancelar</button>
     </div>
   </form>
 </div>

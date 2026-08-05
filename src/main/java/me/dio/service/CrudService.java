@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 public interface CrudService<ID, T> {
     List<T> findAll();
     Page<T> findAll(Pageable pageable);
+    Page<T> findAll(String name, Pageable pageable);
     T findById(ID id);
     T create(T entity);
     T update(ID id, T entity);

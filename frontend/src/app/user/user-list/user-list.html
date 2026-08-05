@@ -7,15 +7,36 @@
     </button>
   </div>
 
-  <mat-spinner *ngIf="loading" diameter="40"></mat-spinner>
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar por nome</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input matInput [value]="searchTerm" (input)="onSearch($any($event.target).value)"
+           placeholder="Ex.: Devweekerson" />
+    <button *ngIf="searchTerm" matSuffix mat-icon-button aria-label="Limpar busca"
+            (click)="onSearch('')">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
 
-  <mat-table [dataSource]="users" class="users-table">
+  <p class="result-count" *ngIf="!loading">
+    {{ totalElements }} usuário(s)
+    <ng-container *ngIf="searchTerm"> — resultados para "{{ searchTerm }}"</ng-container>
+  </p>
+
+  <mat-spinner *ngIf="loading" diameter="40" class="list-spinner"></mat-spinner>
+
+  <mat-table [dataSource]="users" class="users-table" *ngIf="!loading && users.length > 0">
     <ng-container matColumnDef="name">
       <mat-header-cell *matHeaderCellDef>Nome</mat-header-cell>
       <mat-cell *matCellDef="let user">
         {{ user.name }}
         <mat-icon *ngIf="isProtected(user)" title="Usuário protegido (ID 1)" class="lock-icon">lock</mat-icon>
       </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="agency">
+      <mat-header-cell *matHeaderCellDef>Agência</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.account.agency }}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="account">
@@ -28,9 +49,14 @@
       <mat-cell *matCellDef="let user">{{ user.account.balance | currency: 'BRL' }}</mat-cell>
     </ng-container>
 
-    <ng-container matColumnDef="limit">
-      <mat-header-cell *matHeaderCellDef>Limite</mat-header-cell>
-      <mat-cell *matCellDef="let user">{{ user.account.limit | currency: 'BRL' }}</mat-cell>
+    <ng-container matColumnDef="card">
+      <mat-header-cell *matHeaderCellDef>Cartão</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.card.number }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="extra">
+      <mat-header-cell *matHeaderCellDef>Features / News</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.features.length }} / {{ user.news.length }}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="actions">
@@ -39,13 +65,15 @@
         <button mat-icon-button color="primary"
                 [routerLink]="['/users', user.id, 'edit']"
                 [disabled]="isProtected(user)"
-                [title]="isProtected(user) ? 'Usuário protegido não pode ser editado' : 'Editar'">
+                [title]="isProtected(user) ? 'Usuário protegido não pode ser editado' : 'Editar'"
+                aria-label="Editar usuário">
           <mat-icon>edit</mat-icon>
         </button>
         <button mat-icon-button color="warn"
                 (click)="confirmDelete(user)"
                 [disabled]="isProtected(user)"
-                [title]="isProtected(user) ? 'Usuário protegido não pode ser excluído' : 'Excluir'">
+                [title]="isProtected(user) ? 'Usuário protegido não pode ser excluído' : 'Excluir'"
+                aria-label="Excluir usuário">
           <mat-icon>delete</mat-icon>
         </button>
       </mat-cell>
@@ -56,6 +84,7 @@
   </mat-table>
 
   <mat-paginator
+    *ngIf="!loading && users.length > 0"
     [length]="totalElements"
     [pageSize]="pageSize"
     [pageSizeOptions]="[5, 10, 25, 50]"
@@ -63,7 +92,8 @@
     showFirstLastButtons>
   </mat-paginator>
 
-  <p *ngIf="!loading && users.length === 0" class="empty-state">
-    Nenhum usuário encontrado.
-  </p>
+  <div *ngIf="!loading && users.length === 0" class="empty-state">
+    <mat-icon class="empty-icon">search_off</mat-icon>
+    <p>{{ searchTerm ? 'Nenhum usuário encontrado para "' + searchTerm + '".' : 'Nenhum usuário cadastrado.' }}</p>
+  </div>
 </div>

@@ -10,10 +10,12 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
-  list(page: number, size: number): Observable<UserPage> {
-    return this.http.get<UserPage>(this.baseUrl, {
-      params: { page, size },
-    });
+  list(page: number, size: number, name?: string): Observable<UserPage> {
+    const params: Record<string, string> = { page: String(page), size: String(size) };
+    if (name && name.trim()) {
+      params['name'] = name.trim();
+    }
+    return this.http.get<UserPage>(this.baseUrl, { params });
   }
 
   get(id: number): Observable<User> {
