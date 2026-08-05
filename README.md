@@ -72,7 +72,7 @@ npm install
 npm start          # http://localhost:4200  (requer a API rodando na 8080)
 ```
 
-Testes do frontend: `npm test` (vitest).
+Testes do frontend: `npm run test:ci` (vitest, modo CI sem watch).
 
 ## 📖 Como Executar o Projeto
 
