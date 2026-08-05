@@ -8,8 +8,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderColumn;
 
 @Entity(name = "tb_user")
 public class User {
@@ -26,10 +29,20 @@ public class User {
     @OneToOne(cascade = CascadeType.ALL)
     private Card card;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // LAZY + @OrderColumn so the collections are indexed lists, not bags:
+    // two bag collections can't be fetched in one query (MultipleBagFetchException).
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinTable(name = "tb_user_features",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "features_id"))
+    @OrderColumn(name = "features_order")
     private List<Feature> features;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinTable(name = "tb_user_news",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "news_id"))
+    @OrderColumn(name = "news_order")
     private List<News> news;
 
     public Long getId() {

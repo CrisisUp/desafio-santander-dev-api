@@ -33,8 +33,10 @@ public record UserDto(
         model.setName(this.name);
         model.setAccount(ofNullable(this.account).map(AccountDto::toModel).orElse(null));
         model.setCard(ofNullable(this.card).map(CardDto::toModel).orElse(null));
-        model.setFeatures(ofNullable(this.features).orElse(emptyList()).stream().map(FeatureDto::toModel).collect(toList()));
-        model.setNews(ofNullable(this.news).orElse(emptyList()).stream().map(NewsDto::toModel).collect(toList()));
+        // Lists pass through null so the service can distinguish "field absent"
+        // from "empty list" (the update validation rejects a null features/news).
+        model.setFeatures(ofNullable(this.features).map(feats -> feats.stream().map(FeatureDto::toModel).collect(toList())).orElse(null));
+        model.setNews(ofNullable(this.news).map(newsItems -> newsItems.stream().map(NewsDto::toModel).collect(toList())).orElse(null));
         return model;
     }
 

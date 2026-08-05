@@ -1,0 +1,14 @@
+# Base configuration. The `dev` profile is the default (see application-dev.yml).
+spring:
+  application:
+    name: santander-dev-week-2023-api
+  profiles:
+    default: dev
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+
+# CORS is restricted to the Angular dev server by default.
+cors:
+  allowed-origins: http://localhost:4200

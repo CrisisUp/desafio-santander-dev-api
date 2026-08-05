@@ -1,0 +1,198 @@
+openapi: 3.1.0
+servers:
+- url: /
+  description: Default Server URL
+tags:
+- name: Users Controller
+  description: RESTful API for managing users.
+paths:
+  /users/{id}:
+    get:
+      tags:
+      - Users Controller
+      summary: Get a user by ID
+      description: Retrieve a specific user based on its ID
+      operationId: findById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '404':
+          description: User not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+    put:
+      tags:
+      - Users Controller
+      summary: Update a user
+      description: Update the data of an existing user based on its ID
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+        required: true
+      responses:
+        '422':
+          description: Invalid user data provided
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '200':
+          description: User updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '404':
+          description: User not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+    delete:
+      tags:
+      - Users Controller
+      summary: Delete a user
+      description: Delete an existing user based on its ID
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+  /users:
+    get:
+      tags:
+      - Users Controller
+      summary: Get all users
+      description: Retrieve a list of all registered users
+      operationId: findAll
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+    post:
+      tags:
+      - Users Controller
+      summary: Create a new user
+      description: Create a new user and return the created user's data
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+        required: true
+      responses:
+        '422':
+          description: Invalid user data provided
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '201':
+          description: User created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+components:
+  schemas:
+    AccountDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        number:
+          type: string
+        agency:
+          type: string
+        balance:
+          type: number
+        limit:
+          type: number
+    CardDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        number:
+          type: string
+        limit:
+          type: number
+    FeatureDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        icon:
+          type: string
+        description:
+          type: string
+    NewsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        icon:
+          type: string
+        description:
+          type: string
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        account:
+          $ref: '#/components/schemas/AccountDto'
+        card:
+          $ref: '#/components/schemas/CardDto'
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureDto'
+        news:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsDto'

@@ -1,0 +1,69 @@
+<div class="page-container">
+  <div class="toolbar">
+    <h2>Usuários</h2>
+    <button mat-raised-button color="primary" routerLink="/users/new">
+      <mat-icon>person_add</mat-icon>
+      Novo usuário
+    </button>
+  </div>
+
+  <mat-spinner *ngIf="loading" diameter="40"></mat-spinner>
+
+  <mat-table [dataSource]="users" class="users-table">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Nome</mat-header-cell>
+      <mat-cell *matCellDef="let user">
+        {{ user.name }}
+        <mat-icon *ngIf="isProtected(user)" title="Usuário protegido (ID 1)" class="lock-icon">lock</mat-icon>
+      </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="account">
+      <mat-header-cell *matHeaderCellDef>Conta</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.account.number }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="balance">
+      <mat-header-cell *matHeaderCellDef>Saldo</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.account.balance | currency: 'BRL' }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="limit">
+      <mat-header-cell *matHeaderCellDef>Limite</mat-header-cell>
+      <mat-cell *matCellDef="let user">{{ user.account.limit | currency: 'BRL' }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Ações</mat-header-cell>
+      <mat-cell *matCellDef="let user">
+        <button mat-icon-button color="primary"
+                [routerLink]="['/users', user.id, 'edit']"
+                [disabled]="isProtected(user)"
+                [title]="isProtected(user) ? 'Usuário protegido não pode ser editado' : 'Editar'">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn"
+                (click)="confirmDelete(user)"
+                [disabled]="isProtected(user)"
+                [title]="isProtected(user) ? 'Usuário protegido não pode ser excluído' : 'Excluir'">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+  </mat-table>
+
+  <mat-paginator
+    [length]="totalElements"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25, 50]"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+
+  <p *ngIf="!loading && users.length === 0" class="empty-state">
+    Nenhum usuário encontrado.
+  </p>
+</div>

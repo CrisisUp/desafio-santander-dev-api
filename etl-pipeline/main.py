@@ -2,26 +2,28 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-import time
 
 # Carrega as variáveis do arquivo .env
 load_dotenv()
 
 # Busca as configurações das variáveis de ambiente
-API_URL = os.getenv('API_URL')
-ID_START = int(os.getenv('USER_ID_START', 1))
-ID_END = int(os.getenv('USER_ID_END', 21))
+API_URL = os.getenv('API_URL', 'http://localhost:8080')
 
-def extract_user(user_id):
-    max_retries = 5
-    for i in range(max_retries):
-        try:
-            response = requests.get(f'{API_URL}/users/{user_id}')
-            return response.json() if response.status_code == 200 else None
-        except requests.exceptions.ConnectionError:
-            print(f"⚠️ API ainda não disponível (Tentativa {i+1}/{max_retries}). Aguardando...")
-            time.sleep(3)
-    return None
+PAGE_SIZE = 100
+
+def extract_users():
+    """Extrai todos os usuários da API paginada (evita carregar tudo de uma vez)."""
+    users = []
+    page = 0
+    while True:
+        response = requests.get(f'{API_URL}/users', params={'page': page, 'size': PAGE_SIZE})
+        response.raise_for_status()
+        data = response.json()
+        users.extend(data.get('content', []))
+        if page >= data.get('totalPages', 0) - 1:
+            break
+        page += 1
+    return users
 
 def transform_user(user):
     name = user['name']
@@ -42,12 +44,12 @@ def load_to_file(user):
 
 def run_pipeline():
     print(f"🚀 Iniciando Pipeline Seguro em: {API_URL}")
-    for user_id in range(ID_START, ID_END + 1):
-        user_data = extract_user(user_id)
-        if user_data:
-            print(f"✅ Processando ID: {user_id}")
-            transformed = transform_user(user_data)
-            load_to_file(transformed)
+    users = extract_users()
+    print(f"✅ Extraídos {len(users)} usuários")
+    for user in users:
+        print(f"✅ Processando ID: {user['id']}")
+        transformed = transform_user(user)
+        load_to_file(transformed)
 
 if __name__ == "__main__":
     run_pipeline()

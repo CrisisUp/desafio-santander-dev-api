@@ -1,0 +1,45 @@
+.page-container {
+  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.section {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section legend {
+  padding: 0 8px;
+}
+
+.repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.repeat-row mat-form-field {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}

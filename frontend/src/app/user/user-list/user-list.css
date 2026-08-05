@@ -1,0 +1,34 @@
+.page-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.toolbar h2 {
+  margin: 0;
+}
+
+.users-table {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.lock-icon {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.38);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.empty-state {
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  padding: 24px;
+}

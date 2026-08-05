@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/swagger-ui/index.html"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,3 +19,11 @@ services:
       - API_URL=http://santander-api:8080
     volumes:
       - ./etl-pipeline/data:/app/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      santander-api:
+        condition: service_healthy

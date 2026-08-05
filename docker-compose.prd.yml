@@ -1,0 +1,38 @@
+# Production-like stack: real PostgreSQL + Flyway migrations + ETL.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prd.yml up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: santander
+      POSTGRES_USER: santander
+      POSTGRES_PASSWORD: santander
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U santander"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  santander-api:
+    environment:
+      SPRING_PROFILES_ACTIVE: prd
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: santander
+      PGUSER: santander
+      PGPASSWORD: santander
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    # Serves the SPA + proxies /users to santander-api (same port 4200 as dev).
+    depends_on:
+      santander-api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

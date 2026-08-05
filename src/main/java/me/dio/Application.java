@@ -8,12 +8,10 @@ import io.swagger.v3.oas.annotations.servers.Server;
 
 /**
  * Initializes our RESTful API.
- * 
  * <p>
- * The {@link OpenAPIDefinition} annotation was used to enable HTTPS in the Swagger UI.
- * For more details, see the following post on Stack Overflow: 
- * https://stackoverflow.com/a/71132608/3072570
- * </p>
+ * The {@link OpenAPIDefinition} annotation declares a default server URL ("/") for
+ * the OpenAPI spec, so Swagger UI resolves API calls against the same origin that
+ * serves the UI.
  */
 
 @OpenAPIDefinition(servers = {@Server(url = "/", description = "Default Server URL")})

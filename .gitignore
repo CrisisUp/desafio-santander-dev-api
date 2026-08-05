@@ -39,3 +39,6 @@ out/
 
 .env
 etl-pipeline/data/
+etl-pipeline/venv/
+__pycache__/
+*.pyc

@@ -1,0 +1,9 @@
+.app-title {
+  font-weight: 500;
+  margin-right: 24px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+}

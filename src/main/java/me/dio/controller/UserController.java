@@ -6,28 +6,35 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import me.dio.controller.dto.UserDto;
 import me.dio.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/users")
 @Tag(name = "Users Controller", description = "RESTful API for managing users.")
 public record UserController(UserService userService) {
 
     @GetMapping
-    @Operation(summary = "Get all users", description = "Retrieve a list of all registered users")
-    @ApiResponses(value = { 
+    @Operation(summary = "Get all users", description = "Retrieve a paged list of all registered users")
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operation successful")
     })
-    public ResponseEntity<List<UserDto>> findAll() {
-        var users = userService.findAll();
-        var usersDto = users.stream().map(UserDto::new).collect(Collectors.toList());
+    public ResponseEntity<Page<UserDto>> findAll(Pageable pageable) {
+        var users = userService.findAll(pageable);
+        var usersDto = users.map(UserDto::new);
         return ResponseEntity.ok(usersDto);
     }
 
