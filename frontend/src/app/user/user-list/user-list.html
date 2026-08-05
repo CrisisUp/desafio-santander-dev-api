@@ -25,9 +25,9 @@
 
   <mat-spinner *ngIf="loading" diameter="40" class="list-spinner"></mat-spinner>
 
-  <mat-table [dataSource]="users" class="users-table" *ngIf="!loading && users.length > 0">
+  <mat-table [dataSource]="users" matSort (matSortChange)="onSortChange($event)" class="users-table" *ngIf="!loading && users.length > 0">
     <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef>Nome</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Nome</mat-header-cell>
       <mat-cell *matCellDef="let user">
         {{ user.name }}
         <mat-icon *ngIf="isProtected(user)" title="Usuário protegido (ID 1)" class="lock-icon">lock</mat-icon>
@@ -35,17 +35,17 @@
     </ng-container>
 
     <ng-container matColumnDef="agency">
-      <mat-header-cell *matHeaderCellDef>Agência</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Agência</mat-header-cell>
       <mat-cell *matCellDef="let user">{{ user.account.agency }}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="account">
-      <mat-header-cell *matHeaderCellDef>Conta</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Conta</mat-header-cell>
       <mat-cell *matCellDef="let user">{{ user.account.number }}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="balance">
-      <mat-header-cell *matHeaderCellDef>Saldo</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Saldo</mat-header-cell>
       <mat-cell *matCellDef="let user">{{ user.account.balance | currency: 'BRL' }}</mat-cell>
     </ng-container>
 

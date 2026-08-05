@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { MatSort, Sort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
@@ -25,6 +26,16 @@ export class UserListComponent implements OnInit {
   loading = false;
   searchTerm = '';
   private searchSubject = new Subject<string>();
+
+  /** Sortable columns map to the property path used by the Spring Pageable sort. */
+  readonly sortMap: Record<string, string> = {
+    name: 'name',
+    agency: 'account.agency',
+    account: 'account.number',
+    balance: 'account.balance',
+  };
+
+  @ViewChild(MatSort) sort!: MatSort;
 
   displayedColumns = ['name', 'agency', 'account', 'balance', 'card', 'extra', 'actions'];
 
@@ -55,9 +66,24 @@ export class UserListComponent implements OnInit {
     this.loadUsers();
   }
 
+  onSortChange(sort: Sort): void {
+    // Reset to the first page when the sort changes.
+    this.pageIndex = 0;
+    this.loadUsers();
+  }
+
+  private sortParam(): string {
+    const active = this.sort?.active;
+    if (!active || !this.sort.direction) {
+      return '';
+    }
+    const path = this.sortMap[active] ?? active;
+    return `${path},${this.sort.direction}`;
+  }
+
   loadUsers(): void {
     this.loading = true;
-    this.userService.list(this.pageIndex, this.pageSize, this.searchTerm).subscribe({
+    this.userService.list(this.pageIndex, this.pageSize, this.searchTerm, this.sortParam()).subscribe({
       next: (page) => {
         this.users = page.content;
         this.totalElements = page.totalElements;

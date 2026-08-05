@@ -10,10 +10,13 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
-  list(page: number, size: number, name?: string): Observable<UserPage> {
+  list(page: number, size: number, name?: string, sort?: string): Observable<UserPage> {
     const params: Record<string, string> = { page: String(page), size: String(size) };
     if (name && name.trim()) {
       params['name'] = name.trim();
+    }
+    if (sort) {
+      params['sort'] = sort;
     }
     return this.http.get<UserPage>(this.baseUrl, { params });
   }
