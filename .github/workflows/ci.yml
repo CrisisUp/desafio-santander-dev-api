@@ -15,6 +15,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
       - name: Build and test
         run: ./gradlew test --no-daemon
 
@@ -65,6 +66,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
       - name: Build JAR (required by the API image)
         run: ./gradlew clean bootJar --no-daemon
       - name: Start the full stack
