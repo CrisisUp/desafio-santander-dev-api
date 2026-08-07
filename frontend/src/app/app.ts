@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { routeAnimations } from './route-animation';
+import { BrandIconService } from './icon-registry.service';
 
 @Component({
   selector: 'app-root',
@@ -10,4 +11,7 @@ import { routeAnimations } from './route-animation';
 })
 export class App {
   protected readonly title = 'Santander Dev Week';
+
+  // Registering the brand icons happens once, at app bootstrap.
+  constructor(icons: BrandIconService) {}
 }

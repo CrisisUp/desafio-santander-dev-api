@@ -87,6 +87,24 @@ export class UserFormComponent implements OnInit {
     return !!control && control.invalid && control.touched;
   }
 
+  /** Maps a feature/news description to a registered brand SVG, or null. */
+  brandIcon(description: string | null | undefined): string | null {
+    const key = (description ?? '').trim().toLowerCase();
+    const map: Record<string, string> = {
+      pix: 'pix',
+      pagar: 'pay',
+      pagamentos: 'pay',
+      transferir: 'transfer',
+      transferência: 'transfer',
+      'conta corrente': 'account',
+      cartões: 'cards',
+      crédito: 'credit',
+      seguros: 'insurance',
+      'seguro casa': 'insurance',
+    };
+    return map[key] ?? null;
+  }
+
   addFeature(): FormGroup {
     const group = this.fb.group({ id: null, description: '', icon: '' });
     this.features.push(group);

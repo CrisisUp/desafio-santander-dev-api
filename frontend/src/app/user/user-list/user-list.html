@@ -106,14 +106,24 @@
             <div class="detail-block">
               <h4>Features ({{ user.features.length }})</h4>
               <ul class="detail-list">
-                <li *ngFor="let f of user.features">{{ f.description }}</li>
+                <li *ngFor="let f of user.features" class="detail-item">
+                  @if (brandIcon(f.description); as icon) {
+                    <mat-icon [svgIcon]="icon" class="brand-icon"></mat-icon>
+                  }
+                  {{ f.description }}
+                </li>
               </ul>
               <p *ngIf="user.features.length === 0" class="detail-empty">Nenhuma feature.</p>
             </div>
             <div class="detail-block">
               <h4>News ({{ user.news.length }})</h4>
               <ul class="detail-list">
-                <li *ngFor="let n of user.news">{{ n.description }}</li>
+                <li *ngFor="let n of user.news" class="detail-item">
+                  @if (brandIcon(n.description); as icon) {
+                    <mat-icon [svgIcon]="icon" class="brand-icon"></mat-icon>
+                  }
+                  {{ n.description }}
+                </li>
               </ul>
               <p *ngIf="user.news.length === 0" class="detail-empty">Nenhuma notícia.</p>
             </div>

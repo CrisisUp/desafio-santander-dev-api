@@ -50,6 +50,8 @@
       <legend>Features</legend>
       <div formArrayName="features">
         <div *ngFor="let feature of features.controls; let i = index" [formGroupName]="i" class="repeat-row">
+          <mat-icon *ngIf="brandIcon(feature.get('description')?.value)"
+                    [svgIcon]="brandIcon(feature.get('description')?.value)!" class="brand-icon"></mat-icon>
           <mat-form-field appearance="outline">
             <mat-label>Descrição</mat-label>
             <input matInput formControlName="description" />
@@ -68,6 +70,8 @@
       <legend>News</legend>
       <div formArrayName="news">
         <div *ngFor="let item of news.controls; let i = index" [formGroupName]="i" class="repeat-row">
+          <mat-icon *ngIf="brandIcon(item.get('description')?.value)"
+                    [svgIcon]="brandIcon(item.get('description')?.value)!" class="brand-icon"></mat-icon>
           <mat-form-field appearance="outline">
             <mat-label>Descrição</mat-label>
             <input matInput formControlName="description" />

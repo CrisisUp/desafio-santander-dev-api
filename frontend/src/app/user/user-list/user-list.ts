@@ -189,6 +189,24 @@ export class UserListComponent implements OnInit {
     return user.id != null && this.expandedRow() === user.id;
   }
 
+  /** Maps a feature/news description to a registered brand SVG, or null. */
+  brandIcon(description: string): string | null {
+    const key = description.trim().toLowerCase();
+    const map: Record<string, string> = {
+      pix: 'pix',
+      pagar: 'pay',
+      pagamentos: 'pay',
+      transferir: 'transfer',
+      transferência: 'transfer',
+      'conta corrente': 'account',
+      cartões: 'cards',
+      crédito: 'credit',
+      seguros: 'insurance',
+      'seguro casa': 'insurance',
+    };
+    return map[key] ?? null;
+  }
+
   confirmDelete(user: User): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {

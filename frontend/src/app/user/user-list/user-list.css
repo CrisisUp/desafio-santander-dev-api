@@ -166,6 +166,20 @@
   margin: 0;
   padding-left: 16px;
   font-size: 13px;
+  list-style: none;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--app-primary);
+  flex-shrink: 0;
 }
 
 .detail-empty {
