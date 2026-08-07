@@ -1,11 +1,15 @@
-// Santander brand theme (primary red #EC0000) for Angular Material.
+// Santander brand theme — Material 3 via `mat.define-theme`.
+//
+// The theme config is expanded into CSS custom properties at build time and
+// exposed as semantic tokens (--app-*) below, so components style against a
+// token system instead of hardcoded colors. Dark mode remaps the same tokens.
 @use 'sass:map';
 @use '@angular/material' as mat;
 
 @include mat.core();
 
-// Start from Material's official M3 red palette (structure guaranteed valid)
-// and override the key tones to the Santander brand red (#EC0000).
+// Start from Material's official red palette and override the key tones to the
+// Santander brand red (#EC0000).
 $santander-palette: map.deep-merge(
   mat.$red-palette,
   (
@@ -15,11 +19,22 @@ $santander-palette: map.deep-merge(
   )
 );
 
+// Warm orange used as the secondary/tertiary accent (PIX-like highlights).
+$accent-palette: map.deep-merge(
+  mat.$orange-palette,
+  (
+    40: #f5821f,
+    50: #f5821f,
+    60: #e06a00,
+  )
+);
+
 $theme: mat.define-theme(
   (
     color: (
       theme-type: light,
       primary: $santander-palette,
+      tertiary: $accent-palette,
     ),
     typography: (
       plain-family: Roboto,
@@ -28,15 +43,98 @@ $theme: mat.define-theme(
   )
 );
 
-@include mat.all-component-themes($theme);
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: $santander-palette,
+      tertiary: $accent-palette,
+    ),
+    typography: (
+      plain-family: Roboto,
+      brand-family: Roboto,
+    ),
+  )
+);
+
+// Apply both themes: the default is light, dark kicks in via prefers-color-scheme.
+html {
+  @include mat.all-component-themes($theme);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    @include mat.all-component-themes($dark-theme);
+    color-scheme: dark;
+  }
+}
+
+// ---- Semantic tokens ----
+// Read the M3 color roles out of the theme and publish them as --app-* vars.
+// Components use these instead of hardcoded colors, so dark mode re-themes
+// everything with zero per-component work.
+:root {
+  --app-primary: #{mat.get-theme-color($theme, primary, 40)};
+  --app-on-primary: #{mat.get-theme-color($theme, primary, 100)};
+  --app-primary-container: #{mat.get-theme-color($theme, primary, 90)};
+  --app-on-primary-container: #{mat.get-theme-color($theme, primary, 10)};
+  --app-secondary: #{mat.get-theme-color($theme, secondary, 40)};
+  --app-on-secondary: #{mat.get-theme-color($theme, secondary, 100)};
+  --app-tertiary: #{mat.get-theme-color($theme, tertiary, 40)};
+  --app-background: #{mat.get-theme-color($theme, primary, 98)};
+  --app-surface: #{mat.get-theme-color($theme, primary, 98)};
+  --app-surface-container: #{mat.get-theme-color($theme, primary, 95)};
+  --app-surface-container-high: #{mat.get-theme-color($theme, primary, 90)};
+  --app-on-surface: #{mat.get-theme-color($theme, primary, 10)};
+  --app-on-surface-variant: #{mat.get-theme-color($theme, primary, 30)};
+  --app-outline: #{mat.get-theme-color($theme, primary, 80)};
+  --app-elevation-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  --app-elevation-shadow-raised:
+    0 4px 6px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.05);
+  --app-radius-sm: 8px;
+  --app-radius-md: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-primary: #{mat.get-theme-color($dark-theme, primary, 80)};
+    --app-on-primary: #{mat.get-theme-color($dark-theme, primary, 20)};
+    --app-primary-container: #{mat.get-theme-color($dark-theme, primary, 30)};
+    --app-on-primary-container: #{mat.get-theme-color($dark-theme, primary, 90)};
+    --app-secondary: #{mat.get-theme-color($dark-theme, secondary, 80)};
+    --app-on-secondary: #{mat.get-theme-color($dark-theme, secondary, 20)};
+    --app-tertiary: #{mat.get-theme-color($dark-theme, tertiary, 80)};
+    --app-background: #{mat.get-theme-color($dark-theme, primary, 10)};
+    --app-surface: #{mat.get-theme-color($dark-theme, primary, 10)};
+    --app-surface-container: #{mat.get-theme-color($dark-theme, primary, 20)};
+    --app-surface-container-high: #{mat.get-theme-color($dark-theme, primary, 25)};
+    --app-on-surface: #{mat.get-theme-color($dark-theme, primary, 90)};
+    --app-on-surface-variant: #{mat.get-theme-color($dark-theme, primary, 80)};
+    --app-outline: #{mat.get-theme-color($dark-theme, primary, 60)};
+    --app-elevation-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.6),
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    --app-elevation-shadow-raised:
+      0 4px 6px rgba(0, 0, 0, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
 
 // Base styles.
 html,
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background-color: #fafafa;
   height: 100%;
+}
+
+body {
+  background-color: var(--app-background);
+  color: var(--app-on-surface);
 }
 
 // Success snackbar (green background) for post-save feedback.
