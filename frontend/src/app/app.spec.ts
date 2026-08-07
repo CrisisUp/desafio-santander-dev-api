@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { App } from './app';
 
@@ -9,6 +10,7 @@ describe('App', () => {
       imports: [
         RouterModule.forRoot([]),
         MatToolbarModule,
+        BrowserAnimationsModule,
       ],
       declarations: [
         App,

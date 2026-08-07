@@ -10,20 +10,20 @@
   <mat-form-field appearance="outline" class="search-field">
     <mat-label>Buscar por nome</mat-label>
     <mat-icon matPrefix>search</mat-icon>
-    <input matInput [value]="searchTerm" (input)="onSearch($any($event.target).value)"
+    <input matInput [value]="searchTerm()" (input)="onSearch($any($event.target).value)"
            placeholder="Ex.: Devweekerson" />
-    <button *ngIf="searchTerm" matSuffix mat-icon-button aria-label="Limpar busca"
+    <button *ngIf="searchTerm()" matSuffix mat-icon-button aria-label="Limpar busca"
             (click)="onSearch('')">
       <mat-icon>close</mat-icon>
     </button>
   </mat-form-field>
 
-  <p class="result-count" *ngIf="!loading">
-    {{ totalElements }} usuário(s)
-    <ng-container *ngIf="searchTerm"> — resultados para "{{ searchTerm }}"</ng-container>
+  <p class="result-count" *ngIf="!loading()">
+    {{ totalElements() }} usuário(s)
+    <ng-container *ngIf="searchTerm()"> — resultados para "{{ searchTerm() }}"</ng-container>
   </p>
 
-  <div *ngIf="loading" class="skeleton-list" aria-label="Carregando usuários">
+  <div *ngIf="loading()" class="skeleton-list" aria-label="Carregando usuários">
     <div class="skeleton-row" *ngFor="let row of [0, 1, 2, 3, 4]">
       <div class="skeleton-block" style="width: 25%"></div>
       <div class="skeleton-block" style="width: 12%"></div>
@@ -34,7 +34,9 @@
     </div>
   </div>
 
-  <mat-table [dataSource]="users" matSort (matSortChange)="onSortChange($event)" class="users-table" *ngIf="!loading && users.length > 0">
+  <div class="users-card" *ngIf="!loading() && users().length > 0">
+  <mat-table [dataSource]="users()" matSort (matSortChange)="onSortChange($event)" class="users-table"
+             multiTemplateDataRows @rowAnimation>
     <ng-container matColumnDef="name">
       <mat-header-cell *matHeaderCellDef mat-sort-header matTooltip="Nome do usuário">Nome</mat-header-cell>
       <mat-cell *matCellDef="let user">
@@ -72,6 +74,54 @@
       <mat-cell *matCellDef="let user">{{ user.features.length }} / {{ user.news.length }}</mat-cell>
     </ng-container>
 
+    <ng-container matColumnDef="expand">
+      <mat-header-cell *matHeaderCellDef>
+        <mat-icon matTooltip="Expandir detalhes">expand_more</mat-icon>
+      </mat-header-cell>
+      <mat-cell *matCellDef="let user" class="expand-cell">
+        <button mat-icon-button (click)="toggleRow(user)" [attr.aria-label]="isExpanded(user) ? 'Recolher' : 'Expandir'"
+                [@expandIcon]="isExpanded(user) ? 'expanded' : 'collapsed'">
+          <mat-icon>expand_more</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <!-- Expanded detail row: full account/card/features/news. -->
+    <ng-container matColumnDef="expandedDetail">
+      <td mat-cell *matCellDef="let user" [attr.colspan]="displayedColumns.length" class="detail-cell">
+        <div *ngIf="isExpanded(user)" class="detail-panel" @detailExpand>
+          <div class="detail-grid">
+            <div class="detail-block">
+              <h4>Conta</h4>
+              <p><span>Número:</span> {{ user.account.number }}</p>
+              <p><span>Agência:</span> {{ user.account.agency }}</p>
+              <p><span>Saldo:</span> {{ user.account.balance | currency: 'BRL' }}</p>
+              <p><span>Limite:</span> {{ user.account.limit | currency: 'BRL' }}</p>
+            </div>
+            <div class="detail-block">
+              <h4>Cartão</h4>
+              <p><span>Número:</span> {{ user.card.number }}</p>
+              <p><span>Limite:</span> {{ user.card.limit | currency: 'BRL' }}</p>
+            </div>
+            <div class="detail-block">
+              <h4>Features ({{ user.features.length }})</h4>
+              <ul class="detail-list">
+                <li *ngFor="let f of user.features">{{ f.description }}</li>
+              </ul>
+              <p *ngIf="user.features.length === 0" class="detail-empty">Nenhuma feature.</p>
+            </div>
+            <div class="detail-block">
+              <h4>News ({{ user.news.length }})</h4>
+              <ul class="detail-list">
+                <li *ngFor="let n of user.news">{{ n.description }}</li>
+              </ul>
+              <p *ngIf="user.news.length === 0" class="detail-empty">Nenhuma notícia.</p>
+            </div>
+          </div>
+        </div>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Ações</mat-header-cell>
       <mat-cell *matCellDef="let user">
@@ -93,25 +143,27 @@
     </ng-container>
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns" class="user-row" [class.expanded]="isExpanded(row)"></mat-row>
+    <mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></mat-row>
   </mat-table>
 
   <mat-paginator
-    *ngIf="!loading && users.length > 0"
-    [length]="totalElements"
+    *ngIf="!loading() && users().length > 0"
+    [length]="totalElements()"
     [pageSize]="pageSize"
     [pageSizeOptions]="[5, 10, 25, 50]"
     (page)="onPageChange($event)"
     showFirstLastButtons>
   </mat-paginator>
+  </div>
 
-  <div *ngIf="!loading && users.length === 0" class="empty-state">
+  <div *ngIf="!loading() && users().length === 0" class="empty-state">
     <mat-icon class="empty-icon">search_off</mat-icon>
-    <p>{{ searchTerm ? 'Nenhum usuário encontrado para "' + searchTerm + '".' : 'Nenhum usuário cadastrado.' }}</p>
-    <button mat-raised-button color="primary" *ngIf="searchTerm" (click)="onSearch('')">
+    <p>{{ searchTerm() ? 'Nenhum usuário encontrado para "' + searchTerm() + '".' : 'Nenhum usuário cadastrado.' }}</p>
+    <button mat-raised-button color="primary" *ngIf="searchTerm()" (click)="onSearch('')">
       <mat-icon>filter_alt_off</mat-icon> Limpar filtro
     </button>
-    <button mat-raised-button color="primary" routerLink="/users/new" *ngIf="!searchTerm">
+    <button mat-raised-button color="primary" routerLink="/users/new" *ngIf="!searchTerm()">
       <mat-icon>person_add</mat-icon> Novo usuário
     </button>
   </div>

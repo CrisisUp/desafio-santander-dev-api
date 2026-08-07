@@ -22,7 +22,7 @@
 }
 
 .result-count {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--app-on-surface-variant);
   font-size: 13px;
   margin: 4px 0 12px;
 }
@@ -31,25 +31,37 @@
   margin-bottom: 16px;
 }
 
+/* The table and paginator live in a single elevated card. */
+.users-card {
+  background: var(--app-surface-container);
+  border-radius: var(--app-radius-md);
+  overflow: hidden;
+  box-shadow: var(--app-elevation-shadow-raised);
+  margin-bottom: 16px;
+}
+
 .users-table {
   width: 100%;
-  margin-bottom: 16px;
+}
+
+.mat-mdc-paginator {
+  border-top: 1px solid var(--app-outline);
 }
 
 .lock-icon {
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.38);
+  color: var(--app-on-surface-variant);
   margin-left: 6px;
   vertical-align: middle;
 }
 
 .balance-positive {
-  color: #2e7d32;
+  color: var(--app-secondary);
   font-weight: 500;
 }
 
 .balance-negative {
-  color: #c62828;
+  color: var(--app-primary);
   font-weight: 500;
 }
 
@@ -59,13 +71,18 @@
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--app-outline);
 }
 
 .skeleton-block {
   height: 16px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-container-high) 25%,
+    var(--app-surface) 50%,
+    var(--app-surface-container-high) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-pulse 1.4s ease infinite;
 }
@@ -80,7 +97,7 @@
 }
 
 .empty-state {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--app-on-surface-variant);
   text-align: center;
   padding: 24px;
 }
@@ -89,5 +106,69 @@
   font-size: 48px;
   width: 48px;
   height: 48px;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--app-outline);
+}
+
+/* Expandable row affordance. */
+.expand-cell {
+  width: 48px;
+  padding: 0;
+}
+
+.user-row {
+  cursor: pointer;
+}
+
+.user-row:hover {
+  background: var(--app-surface-container-high);
+}
+
+.user-row.expanded {
+  background: var(--app-surface-container);
+}
+
+.detail-cell {
+  padding: 0 !important;
+  border-bottom-width: 0;
+}
+
+.detail-panel {
+  background: var(--app-surface-container);
+  border-top: 1px solid var(--app-outline);
+  padding: 16px 24px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-block h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-block p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.detail-block p span {
+  color: var(--app-on-surface-variant);
+}
+
+.detail-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 13px;
+}
+
+.detail-empty {
+  color: var(--app-outline);
+  font-style: italic;
 }

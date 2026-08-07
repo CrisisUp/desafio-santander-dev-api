@@ -23,8 +23,8 @@ describe('UserFormComponent', () => {
         MatButtonModule,
         MatIconModule,
         BrowserAnimationsModule,
+        UserFormComponent,
       ],
-      declarations: [UserFormComponent],
     }).compileComponents();
   });
 

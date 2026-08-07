@@ -5,4 +5,6 @@
   <a mat-button routerLink="/users" class="nav-link" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">Usuários</a>
 </mat-toolbar>
 
-<router-outlet></router-outlet>
+<div class="route-host" @routeAnimations>
+  <router-outlet></router-outlet>
+</div>
