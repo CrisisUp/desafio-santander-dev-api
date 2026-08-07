@@ -173,6 +173,48 @@ class UserServiceTest {
     }
 
     @Test
+    void update_rejectsDuplicateAccountNumberFromAnotherUser() {
+        userService.create(newUser("acct-d1", "card-d1"));
+        User second = userService.create(newUser("acct-d2", "card-d2"));
+
+        // second steals acct-d1's number -> must fail even though the number is
+        // not "new" in the DB.
+        User update = newUser("acct-d1", "card-d2");
+        update.setId(second.getId());
+        update.getAccount().setId(second.getAccount().getId());
+        update.getCard().setId(second.getCard().getId());
+        assertThatThrownBy(() -> userService.update(second.getId(), update))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("account number already exists");
+    }
+
+    @Test
+    void update_keepsOwnAccountNumberWithoutFalseDuplicate() {
+        // Regression: the uniqueness check on update must exclude the user's own
+        // number, otherwise an unchanged update is rejected.
+        User created = userService.create(newUser("acct-own", "card-own"));
+        User update = newUser("acct-own", "card-own");
+        update.setId(created.getId());
+        update.getAccount().setId(created.getAccount().getId());
+        update.getCard().setId(created.getCard().getId());
+        User result = userService.update(created.getId(), update);
+        assertThat(result.getName()).isEqualTo("Test User");
+    }
+
+    @Test
+    void update_rejectsBlankName() {
+        User created = userService.create(newUser("acct-bn2", "card-bn2"));
+        User update = newUser("acct-bn2", "card-bn2");
+        update.setId(created.getId());
+        update.getAccount().setId(created.getAccount().getId());
+        update.getCard().setId(created.getCard().getId());
+        update.setName("   ");
+        assertThatThrownBy(() -> userService.update(created.getId(), update))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("name");
+    }
+
+    @Test
     void update_rejectsProtectedId() {
         User update = newUser("acct-up", "card-up");
         update.setId(1L);

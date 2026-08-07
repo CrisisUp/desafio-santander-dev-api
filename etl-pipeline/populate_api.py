@@ -11,10 +11,22 @@ BASE_URL = os.getenv('API_URL', 'http://localhost:8080')
 API_URL = f"{BASE_URL}/users"
 
 def existing_account_numbers():
-    """Números de conta já cadastrados (inclui o seed do Flyway, ex.: 01.097954-4)."""
-    response = requests.get(API_URL)
-    response.raise_for_status()
-    return {user['account']['number'] for user in response.json()}
+    """Números de conta já cadastrados (inclui o seed do Flyway, ex.: 01.097954-4).
+
+    The API returns a Spring Page ({"content": [...]}), not a bare list, so we
+    paginate like main.extract_users instead of iterating the JSON object.
+    """
+    numbers = set()
+    page = 0
+    while True:
+        response = requests.get(API_URL, params={'page': page, 'size': 100})
+        response.raise_for_status()
+        data = response.json()
+        numbers.update(user['account']['number'] for user in data.get('content', []))
+        if page >= data.get('totalPages', 0) - 1:
+            break
+        page += 1
+    return numbers
 
 def create_user(i, used_cards):
     """Gera um payload com conta e cartão únicos e tenta criar o usuário."""

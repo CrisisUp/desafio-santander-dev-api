@@ -17,6 +17,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByCardNumber(String number);
 
+    // Uniqueness checks on update: the number may belong to the user being
+    // updated, so only collisions with *other* users should fail.
+    boolean existsByAccountNumberAndIdNot(String number, Long id);
+
+    boolean existsByCardNumberAndIdNot(String number, Long id);
+
     // EAGER -> LAZY: each read eagerly fetches the full aggregate in a single query
     // instead of N+1 queries (two indexed lists can be fetched in one join).
     @Override

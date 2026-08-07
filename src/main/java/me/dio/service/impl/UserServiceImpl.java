@@ -35,12 +35,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return this.userRepository.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<User> findAll(Pageable pageable) {
         return this.userRepository.findAll(pageable);
     }
@@ -97,6 +91,19 @@ public class UserServiceImpl implements UserService {
         User dbUser = this.findById(id);
         if (!dbUser.getId().equals(userToUpdate.getId())) {
             throw new BusinessException("Update IDs must be the same.");
+        }
+
+        ofNullable(userToUpdate.getName()).filter(name -> !name.isBlank())
+                .orElseThrow(() -> new BusinessException("User name must not be blank."));
+
+        // A concurrent update or a blank re-POST colliding with another user's
+        // account/card number is surfaced as a clean 422 instead of a 500.
+        // The user's own number is excluded so an unchanged update still passes.
+        if (userRepository.existsByAccountNumberAndIdNot(userToUpdate.getAccount().getNumber(), dbUser.getId())) {
+            throw new BusinessException("This account number already exists.");
+        }
+        if (userRepository.existsByCardNumberAndIdNot(userToUpdate.getCard().getNumber(), dbUser.getId())) {
+            throw new BusinessException("This card number already exists.");
         }
 
         // Child IDs must match the persisted ones, otherwise cascade = ALL would
