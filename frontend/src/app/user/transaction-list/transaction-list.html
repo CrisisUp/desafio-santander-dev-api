@@ -1,0 +1,135 @@
+<div class="page-container">
+  <div class="toolbar">
+    <div>
+      <button mat-icon-button routerLink="/users" aria-label="Voltar para usuários" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>Extrato</h2>
+    </div>
+    <button mat-raised-button color="primary" (click)="toggleForm()">
+      <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon>
+      {{ showForm() ? 'Fechar' : 'Nova operação' }}
+    </button>
+  </div>
+
+  <!-- Account header with the derived balance. -->
+  @if (user(); as u) {
+    <div class="account-header users-card">
+      <div class="account-block">
+        <span class="account-label">Conta</span>
+        <span class="account-value">{{ u.account.number }}</span>
+      </div>
+      <div class="account-block">
+        <span class="account-label">Agência</span>
+        <span class="account-value">{{ u.account.agency }}</span>
+      </div>
+      <div class="account-block">
+        <span class="account-label">Saldo</span>
+        <span class="account-value" [class.balance-negative]="u.account.balance < 0"
+              [class.balance-positive]="u.account.balance >= 0">
+          {{ u.account.balance | currency: 'BRL' }}
+        </span>
+      </div>
+    </div>
+  }
+
+  <!-- New operation form (collapsible). -->
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="operation-form section">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="type">
+          <mat-option value="DEPOSIT">Depósito</mat-option>
+          <mat-option value="WITHDRAWAL">Saque</mat-option>
+          <mat-option value="PAYMENT">Pagamento</mat-option>
+          <mat-option value="TRANSFER">Transferência</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Valor (R$)</mat-label>
+        <input matInput type="number" formControlName="amount" min="0.01" step="0.01" />
+      </mat-form-field>
+      @if (form.get('type')?.value === 'TRANSFER') {
+        <mat-form-field appearance="outline">
+          <mat-label>Conta destino (ID)</mat-label>
+          <input matInput type="number" formControlName="destinationAccountId" min="1" />
+        </mat-form-field>
+      }
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving()">
+          <mat-icon *ngIf="!saving()">send</mat-icon>
+          <mat-spinner *ngIf="saving()" diameter="18" class="submit-spinner"></mat-spinner>
+          {{ saving() ? 'Salvando…' : 'Registrar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  <!-- Statement table. -->
+  @if (loading()) {
+    <div class="skeleton-list" aria-label="Carregando extrato">
+      <div class="skeleton-row" *ngFor="let row of [0, 1, 2, 3, 4]">
+        <div class="skeleton-block" style="width: 20%"></div>
+        <div class="skeleton-block" style="width: 25%"></div>
+        <div class="skeleton-block" style="width: 15%"></div>
+        <div class="skeleton-block" style="width: 20%"></div>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && transactions().length > 0) {
+    <div class="users-card">
+      <mat-table [dataSource]="transactions()" class="users-table">
+        <ng-container matColumnDef="date">
+          <mat-header-cell *matHeaderCellDef>Data</mat-header-cell>
+          <mat-cell *matCellDef="let tx">{{ tx.createdAt | date: 'dd/MM/yyyy HH:mm' }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <mat-header-cell *matHeaderCellDef>Tipo</mat-header-cell>
+          <mat-cell *matCellDef="let tx">{{ typeLabel(tx.type) }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="detail">
+          <mat-header-cell *matHeaderCellDef>Detalhe</mat-header-cell>
+          <mat-cell *matCellDef="let tx">
+            @if (tx.type === 'TRANSFER' && tx.destinationAccountId != null) {
+              Para conta #{{ tx.destinationAccountId }}
+            } @else {
+              —
+            }
+          </mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="amount">
+          <mat-header-cell *matHeaderCellDef>Valor</mat-header-cell>
+          <mat-cell *matCellDef="let tx" [class.balance-positive]="amountClass(tx) === 'balance-positive'"
+                    [class.balance-negative]="amountClass(tx) === 'balance-negative'">
+            {{ amountValue(tx) | currency: 'BRL' }}
+          </mat-cell>
+        </ng-container>
+
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+      </mat-table>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  }
+
+  @if (!loading() && transactions().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <p>Nenhuma transação registrada.</p>
+      <button mat-raised-button color="primary" (click)="showForm.set(true)">
+        <mat-icon>add</mat-icon> Registrar primeira operação
+      </button>
+    </div>
+  }
+</div>

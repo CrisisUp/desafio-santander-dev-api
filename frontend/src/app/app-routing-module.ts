@@ -18,6 +18,10 @@ const routes: Routes = [
     canDeactivate: [UnsavedChangesGuard],
     loadComponent: () => import('./user/user-form/user-form').then((m) => m.UserFormComponent),
   },
+  {
+    path: 'users/:id/transactions',
+    loadComponent: () => import('./user/transaction-list/transaction-list').then((m) => m.TransactionListComponent),
+  },
   { path: '**', redirectTo: '/users' },
 ];
 

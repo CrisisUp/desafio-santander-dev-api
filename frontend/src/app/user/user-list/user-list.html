@@ -136,6 +136,12 @@
       <mat-header-cell *matHeaderCellDef>Ações</mat-header-cell>
       <mat-cell *matCellDef="let user">
         <button mat-icon-button color="primary"
+                [routerLink]="['/users', user.id, 'transactions']"
+                matTooltip="Ver extrato"
+                aria-label="Ver extrato">
+          <mat-icon>receipt_long</mat-icon>
+        </button>
+        <button mat-icon-button color="primary"
                 [routerLink]="['/users', user.id, 'edit']"
                 [disabled]="isProtected(user)"
                 [title]="isProtected(user) ? 'Usuário protegido não pode ser editado' : 'Editar'"
