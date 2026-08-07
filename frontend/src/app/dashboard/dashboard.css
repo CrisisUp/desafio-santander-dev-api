@@ -92,6 +92,26 @@
   }
 }
 
+/* Categorical identity ramp (validated, dataviz default slots 1-4):
+   Light: #2a78d6 #eb6834 #1baf7a #eda100 — all checks pass; aqua/yellow
+   sub-3:1 contrast is relieved by the direct labels + table twin.
+   Dark:  #3987e5 #d95926 #199e70 #c98500 — all checks pass, all >= 3:1. */
+:host {
+  --dash-cat-1: #2a78d6;
+  --dash-cat-2: #eb6834;
+  --dash-cat-3: #1baf7a;
+  --dash-cat-4: #eda100;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --dash-cat-1: #3987e5;
+    --dash-cat-2: #d95926;
+    --dash-cat-3: #199e70;
+    --dash-cat-4: #c98500;
+  }
+}
+
 .bar-chart {
   display: flex;
   align-items: flex-end;
@@ -111,6 +131,13 @@
 .bar-col[data-index="2"] { background: var(--dash-step-2); }
 .bar-col[data-index="3"] { background: var(--dash-step-3); }
 .bar-col[data-index="4"] { background: var(--dash-step-4); }
+
+/* Categorical bars use data-cat (more specific than data-index, so the ordinal
+   chart above is unaffected). */
+.bar-col.cat[data-cat="0"] { background: var(--dash-cat-1); }
+.bar-col.cat[data-cat="1"] { background: var(--dash-cat-2); }
+.bar-col.cat[data-cat="2"] { background: var(--dash-cat-3); }
+.bar-col.cat[data-cat="3"] { background: var(--dash-cat-4); }
 
 /* Selective direct labels: value only on non-zero buckets. */
 .bar-value {

@@ -1,4 +1,4 @@
-import { computeDashboard } from './dashboard-data';
+import { computeDashboard, computeTransactionStats } from './dashboard-data';
 import { User } from '../user/user';
 
 /** Minimal user fixture: only the fields computeDashboard reads. */
@@ -56,5 +56,35 @@ describe('computeDashboard', () => {
     const d = computeDashboard([partial]);
     expect(d.totalBalance).toBe(0);
     expect(d.buckets[0].count).toBe(1);
+  });
+});
+
+describe('computeTransactionStats', () => {
+  it('zero-fills missing types so all 4 slots are present in fixed order', () => {
+    const s = computeTransactionStats([
+      { type: 'DEPOSIT', total: 100, count: 1 },
+      { type: 'WITHDRAWAL', total: 25, count: 1 },
+    ]);
+    expect(s.buckets.map((b) => b.type)).toEqual(['DEPOSIT', 'WITHDRAWAL', 'PAYMENT', 'TRANSFER']);
+    expect(s.buckets.find((b) => b.type === 'TRANSFER')).toMatchObject({ total: 0, count: 0, pct: 0 });
+  });
+
+  it('normalizes pct so the largest total is 100', () => {
+    const s = computeTransactionStats([
+      { type: 'DEPOSIT', total: 200, count: 2 },
+      { type: 'PAYMENT', total: 50, count: 1 },
+    ]);
+    expect(s.buckets.find((b) => b.type === 'DEPOSIT')?.pct).toBe(100);
+    expect(s.buckets.find((b) => b.type === 'PAYMENT')?.pct).toBe(25);
+  });
+
+  it('handles an empty payload and pure-zero totals without throwing', () => {
+    expect(computeTransactionStats([]).buckets.every((b) => b.total === 0 && b.pct === 0)).toBe(true);
+    expect(
+      computeTransactionStats([
+        { type: 'DEPOSIT', total: 0, count: 0 },
+        { type: 'PAYMENT', total: 0, count: 0 },
+      ]).buckets.every((b) => b.pct === 0)
+    ).toBe(true);
   });
 });

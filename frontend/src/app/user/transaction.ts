@@ -22,3 +22,10 @@ export interface TransactionRequest {
   amount: number;
   destinationAccountId?: number;
 }
+
+/** One row of the aggregate endpoint: total + count per transaction type. */
+export interface TransactionTypeStat {
+  type: TransactionType;
+  total: number;
+  count: number;
+}

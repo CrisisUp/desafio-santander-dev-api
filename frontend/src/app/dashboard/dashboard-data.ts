@@ -1,4 +1,5 @@
 import { User } from '../user/user';
+import { TransactionType, TransactionTypeStat } from '../user/transaction';
 
 export interface DashboardBucket {
   /** Human label, e.g. "R$ 0–999,99". */
@@ -17,6 +18,54 @@ export interface DashboardData {
   maxBalance: number;
   minBalance: number;
   buckets: DashboardBucket[];
+  transactionStats: TransactionStats;
+}
+
+export interface TransactionStatBucket {
+  type: TransactionType;
+  label: string;
+  total: number;
+  count: number;
+  /** total / maxTotal * 100, so the tallest bar is 100. */
+  pct: number;
+}
+
+export interface TransactionStats {
+  buckets: TransactionStatBucket[];
+}
+
+// Fixed slot order — color follows the entity, never its rank. The backend omits
+// types with zero rows, so the frontend zero-fills from this fixed list.
+const TX_TYPES: TransactionType[] = ['DEPOSIT', 'WITHDRAWAL', 'PAYMENT', 'TRANSFER'];
+
+const TX_LABELS: Record<TransactionType, string> = {
+  DEPOSIT: 'Depósito',
+  WITHDRAWAL: 'Saque',
+  PAYMENT: 'Pagamento',
+  TRANSFER: 'Transferência',
+};
+
+/**
+ * Pure aggregation of the transaction-type summary into fixed, zero-filled
+ * buckets with normalized pct. No Angular dependencies — testable core.
+ */
+export function computeTransactionStats(stats: TransactionTypeStat[]): TransactionStats {
+  const byType = new Map(stats.map((s) => [s.type, s]));
+  const buckets: TransactionStatBucket[] = TX_TYPES.map((type) => {
+    const s = byType.get(type);
+    return {
+      type,
+      label: TX_LABELS[type],
+      total: s?.total ?? 0,
+      count: s?.count ?? 0,
+      pct: 0,
+    };
+  });
+  const maxTotal = Math.max(...buckets.map((b) => b.total), 1);
+  for (const b of buckets) {
+    b.pct = Math.round((b.total / maxTotal) * 100);
+  }
+  return { buckets };
 }
 
 /** Fixed balance ranges, sequential-safe (ordered, low → high). */
@@ -53,7 +102,8 @@ export function computeDashboard(users: User[]): DashboardData {
     pct: Math.round((counts[i] / maxCount) * 100),
   }));
 
-  return { totalAccounts, totalBalance, avgBalance, maxBalance, minBalance, buckets };
+  // transactionStats is filled by the component after the stats fetch lands.
+  return { totalAccounts, totalBalance, avgBalance, maxBalance, minBalance, buckets, transactionStats: { buckets: [] } };
 }
 
 function round2(n: number): number {

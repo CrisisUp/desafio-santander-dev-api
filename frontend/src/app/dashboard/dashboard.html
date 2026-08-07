@@ -56,5 +56,36 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Categorical chart: total value by transaction type. -->
+    <div class="users-card chart-card">
+      <h3 class="chart-title">Valor total por tipo</h3>
+      <div class="bar-chart" role="img"
+           [attr.aria-label]="'Valor total por tipo: ' + d.transactionStats.buckets.map(b => b.label + ': ' + b.total + ' reais').join(', ')">
+        @for (bucket of d.transactionStats.buckets; track bucket.type; let i = $index) {
+          <div class="bar-col cat" [attr.data-cat]="i" [style.height.%]="bucket.pct"
+               matTooltip="{{ bucket.label }}: {{ bucket.total | currency: 'BRL' }} ({{ bucket.count }} op.)">
+            <span class="bar-value" *ngIf="bucket.count > 0">{{ bucket.total | currency: 'BRL' }}</span>
+          </div>
+        }
+      </div>
+      <div class="bar-labels">
+        @for (bucket of d.transactionStats.buckets; track bucket.type) {
+          <span class="bar-label">{{ bucket.label }}</span>
+        }
+      </div>
+
+      <!-- Table view twin: values reachable without hovering. -->
+      <table class="chart-table">
+        <thead>
+          <tr><th>Tipo</th><th>Valor total</th><th>Operações</th></tr>
+        </thead>
+        <tbody>
+          @for (bucket of d.transactionStats.buckets; track bucket.type) {
+            <tr><td>{{ bucket.label }}</td><td>{{ bucket.total | currency: 'BRL' }}</td><td>{{ bucket.count }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
   }
 </div>
