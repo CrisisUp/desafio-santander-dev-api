@@ -1,0 +1,60 @@
+<div class="page-container">
+  <div class="toolbar">
+    <h2>Dashboard</h2>
+  </div>
+
+  <p class="result-count" *ngIf="loading()">Carregando…</p>
+
+  <!-- KPI row -->
+  @if (data(); as d) {
+    <div class="kpi-row">
+      <div class="users-card kpi-tile">
+        <span class="kpi-label">Contas</span>
+        <span class="kpi-value">{{ d.totalAccounts }}</span>
+      </div>
+      <div class="users-card kpi-tile">
+        <span class="kpi-label">Saldo total</span>
+        <span class="kpi-value">{{ d.totalBalance | currency: 'BRL' }}</span>
+      </div>
+      <div class="users-card kpi-tile">
+        <span class="kpi-label">Saldo médio</span>
+        <span class="kpi-value">{{ d.avgBalance | currency: 'BRL' }}</span>
+      </div>
+      <div class="users-card kpi-tile">
+        <span class="kpi-label">Maior saldo</span>
+        <span class="kpi-value" class="kpi-high">{{ d.maxBalance | currency: 'BRL' }}</span>
+      </div>
+    </div>
+
+    <!-- Main chart: balance distribution by range -->
+    <div class="users-card chart-card">
+      <h3 class="chart-title">Saldo por faixa</h3>
+      <div class="bar-chart" role="img"
+           [attr.aria-label]="'Distribuição de saldo: ' + d.buckets.map(b => b.label + ': ' + b.count + ' contas').join(', ')">
+        @for (bucket of d.buckets; track bucket.label; let i = $index) {
+          <div class="bar-col" [attr.data-index]="i" [style.height.%]="bucket.pct"
+               matTooltip="{{ bucket.label }}: {{ bucket.count }} conta(s)">
+            <span class="bar-value" *ngIf="bucket.count > 0">{{ bucket.count }}</span>
+          </div>
+        }
+      </div>
+      <div class="bar-labels">
+        @for (bucket of d.buckets; track bucket.label) {
+          <span class="bar-label">{{ bucket.label }}</span>
+        }
+      </div>
+
+      <!-- Table view twin (accessibility: the chart is never data-by-color-alone). -->
+      <table class="chart-table">
+        <thead>
+          <tr><th>Faixa</th><th>Contas</th></tr>
+        </thead>
+        <tbody>
+          @for (bucket of d.buckets; track bucket.label) {
+            <tr><td>{{ bucket.label }}</td><td>{{ bucket.count }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

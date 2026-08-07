@@ -1,0 +1,160 @@
+/* Layout (duplicated locally from user-list.css; promote to styles.scss when a
+   third view needs it). */
+.page-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.toolbar h2 {
+  margin: 0;
+}
+
+.result-count {
+  color: var(--app-on-surface-variant);
+  font-size: 13px;
+  margin: 4px 0 12px;
+}
+
+.users-card {
+  background: var(--app-surface-container);
+  border-radius: var(--app-radius-md);
+  overflow: hidden;
+  box-shadow: var(--app-elevation-shadow-raised);
+  margin-bottom: 16px;
+}
+
+/* KPI row: a handful of headline numbers, no series color. */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.kpi-tile {
+  padding: 16px;
+}
+
+.kpi-label {
+  display: block;
+  color: var(--app-on-surface-variant);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  display: block;
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--app-on-surface);
+  margin-top: 4px;
+}
+
+/* Chart card. */
+.chart-card {
+  padding: 16px;
+}
+
+.chart-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--app-on-surface);
+}
+
+/* Sequential ordinal ramp (validated): light 5 steps, dark 3 steps.
+   Light: #5c0000 #7a0000 #a50000 #d40000 #e5564c
+   Dark:  #d40000 #e5564c #ffb4a8 (dark surface is itself dark red #690100). */
+:host {
+  --dash-step-0: #5c0000;
+  --dash-step-1: #7a0000;
+  --dash-step-2: #a50000;
+  --dash-step-3: #d40000;
+  --dash-step-4: #e5564c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --dash-step-0: #d40000;
+    --dash-step-1: #e5564c;
+    --dash-step-2: #e5564c;
+    --dash-step-3: #ffb4a8;
+    --dash-step-4: #ffb4a8;
+  }
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px; /* surface gap between adjacent bars */
+  height: 220px;
+}
+
+.bar-col {
+  flex: 1;
+  border-radius: 4px 4px 0 0; /* 4px rounded data-end, square at baseline */
+  position: relative;
+  min-height: 2px;
+}
+
+.bar-col[data-index="0"] { background: var(--dash-step-0); }
+.bar-col[data-index="1"] { background: var(--dash-step-1); }
+.bar-col[data-index="2"] { background: var(--dash-step-2); }
+.bar-col[data-index="3"] { background: var(--dash-step-3); }
+.bar-col[data-index="4"] { background: var(--dash-step-4); }
+
+/* Selective direct labels: value only on non-zero buckets. */
+.bar-value {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--app-on-surface-variant);
+}
+
+.bar-labels {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.bar-label {
+  flex: 1;
+  font-size: 10px;
+  text-align: center;
+  color: var(--app-on-surface-variant);
+}
+
+/* Table twin (the chart is never data-by-color alone). */
+.chart-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.chart-table th,
+.chart-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--app-outline);
+}
+
+.chart-table th {
+  color: var(--app-on-surface-variant);
+  font-weight: 500;
+}
+
+.chart-table td {
+  color: var(--app-on-surface);
+}

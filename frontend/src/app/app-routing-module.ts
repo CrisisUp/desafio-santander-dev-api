@@ -22,6 +22,10 @@ const routes: Routes = [
     path: 'users/:id/transactions',
     loadComponent: () => import('./user/transaction-list/transaction-list').then((m) => m.TransactionListComponent),
   },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./dashboard/dashboard').then((m) => m.DashboardComponent),
+  },
   { path: '**', redirectTo: '/users' },
 ];
 
