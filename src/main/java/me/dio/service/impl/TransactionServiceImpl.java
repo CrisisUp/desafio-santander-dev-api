@@ -6,6 +6,7 @@ import me.dio.domain.model.Transaction;
 import me.dio.domain.model.TransactionType;
 import me.dio.domain.repository.AccountRepository;
 import me.dio.domain.repository.TransactionRepository;
+import me.dio.domain.repository.TransactionTypeSummary;
 import me.dio.service.TransactionService;
 import me.dio.service.exception.BusinessException;
 import me.dio.service.exception.NotFoundException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static java.util.Optional.ofNullable;
 
@@ -33,6 +35,12 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(readOnly = true)
     public Page<Transaction> findByAccountId(Long accountId, Pageable pageable) {
         return this.transactionRepository.findByAccount_IdOrderByCreatedAtDesc(accountId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionTypeSummary> summarizeByType() {
+        return this.transactionRepository.summarizeByType();
     }
 
     @Override

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import me.dio.controller.dto.TransactionDto;
 import me.dio.controller.dto.TransactionRequestDto;
+import me.dio.controller.dto.TransactionTypeSummaryDto;
 import me.dio.service.TransactionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,11 +20,24 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
 @Tag(name = "Transactions Controller", description = "RESTful API for account statements.")
 public record TransactionController(TransactionService transactionService) {
+
+    @GetMapping("/transactions/summary")
+    @Operation(summary = "Transaction totals by type",
+            description = "Aggregate SUM(amount) and COUNT per transaction type across all accounts")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operation successful")
+    })
+    public ResponseEntity<List<TransactionTypeSummaryDto>> summarizeByType() {
+        return ResponseEntity.ok(transactionService.summarizeByType().stream()
+                .map(TransactionTypeSummaryDto::new)
+                .toList());
+    }
 
     @GetMapping("/{id}/transactions")
     @Operation(summary = "List transactions", description = "Retrieve a paged statement for an account")

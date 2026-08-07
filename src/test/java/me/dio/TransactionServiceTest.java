@@ -8,6 +8,7 @@ import me.dio.domain.model.TransactionType;
 import me.dio.domain.model.User;
 import me.dio.domain.repository.AccountRepository;
 import me.dio.domain.repository.TransactionRepository;
+import me.dio.domain.repository.TransactionTypeSummary;
 import me.dio.domain.repository.UserRepository;
 import me.dio.service.TransactionService;
 import me.dio.service.UserService;
@@ -153,6 +154,36 @@ class TransactionServiceTest {
                 new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("1.00"), null)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("not found");
+    }
+
+    // ---- aggregate ----
+
+    @Test
+    void summarizeByTypeReturnsTotalsFromSeed() {
+        var summaries = transactionService.summarizeByType();
+
+        // V4 (account 1) + V6 (accounts 2..41): 41 deposits, 40 payments, 21 withdrawals.
+        assertThat(summaries).extracting(TransactionTypeSummary::type)
+                .containsExactlyInAnyOrder(TransactionType.DEPOSIT, TransactionType.WITHDRAWAL, TransactionType.PAYMENT);
+        assertThat(summaries).extracting(TransactionTypeSummary::count)
+                .containsExactlyInAnyOrder(41L, 40L, 21L);
+
+        assertThat(summaries).filteredOn(s -> s.type() == TransactionType.DEPOSIT)
+                .singleElement()
+                .satisfies(s -> {
+                    assertThat(s.total()).isEqualByComparingTo("108820.00");
+                    assertThat(s.count()).isEqualTo(41L);
+                });
+        assertThat(summaries).filteredOn(s -> s.type() == TransactionType.PAYMENT)
+                .singleElement()
+                .satisfies(s -> assertThat(s.total()).isEqualByComparingTo("15110.00"));
+        assertThat(summaries).filteredOn(s -> s.type() == TransactionType.WITHDRAWAL)
+                .singleElement()
+                .satisfies(s -> assertThat(s.total()).isEqualByComparingTo("7155.88"));
+
+        // TRANSFER has no seed rows → absent from the aggregate (frontend zero-fills).
+        assertThat(summaries).extracting(TransactionTypeSummary::type)
+                .doesNotContain(TransactionType.TRANSFER);
     }
 
     // ---- read ----
