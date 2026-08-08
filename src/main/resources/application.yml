@@ -12,3 +12,9 @@ spring:
 # CORS is restricted to the Angular dev server by default.
 cors:
   allowed-origins: http://localhost:4200
+
+# Per-IP sliding-window rate limit for write requests (POST).
+# High enough for normal dev use; raise/lower per profile if needed.
+rate-limit:
+  max-requests: 20
+  window-seconds: 60

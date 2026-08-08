@@ -1,6 +1,9 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:sdw2023
+    # File-backed H2 so dev data (transactions, users) survives restarts.
+    # ./data is git-ignored. DB_CLOSE_ON_EXIT=FALSE keeps the DB open while
+    # other tools inspect it; Flyway applies on first run.
+    url: jdbc:h2:file:./data/sdw2023;DB_CLOSE_ON_EXIT=FALSE
     username: sdw2023
     password:
   jpa:

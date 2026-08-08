@@ -41,4 +41,7 @@ out/
 etl-pipeline/data/
 etl-pipeline/venv/
 __pycache__/
+
+# Dev H2 file database
+data/
 *.pyc

@@ -70,6 +70,8 @@ paths:
                 $ref: '#/components/schemas/UserDto'
         '422':
           $ref: '#/components/responses/PlainError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /users/check:
     get:
       tags:
@@ -227,6 +229,8 @@ paths:
           $ref: '#/components/responses/PlainError'
         '422':
           $ref: '#/components/responses/PlainError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 components:
   parameters:
     PathId:
@@ -271,6 +275,13 @@ components:
           schema:
             type: string
           example: Resource not found.
+    RateLimited:
+      description: Too many write requests from this IP (rate-limit.max-requests per window)
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Too many requests. Try again shortly.
   schemas:
     AccountDto:
       type: object
