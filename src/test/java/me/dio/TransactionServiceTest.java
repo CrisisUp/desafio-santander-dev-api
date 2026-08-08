@@ -220,6 +220,82 @@ class TransactionServiceTest {
                 .hasMessageContaining("not found");
     }
 
+    // ---- idempotency ----
+
+    @Test
+    void create_withSameKeyReturnsExistingTransaction() {
+        Long accountId = seededAccountId();
+        BigDecimal before = accountRepository.findById(accountId).orElseThrow().getBalance();
+
+        Transaction first = transactionService.create(accountId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("25.00"), null), "key-1");
+        Transaction retry = transactionService.create(accountId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("25.00"), null), "key-1");
+
+        // Same transaction returned; the balance was credited only once.
+        assertThat(retry.getId()).isEqualTo(first.getId());
+        assertThat(accountRepository.findById(accountId).orElseThrow().getBalance())
+                .isEqualByComparingTo(before.add(new BigDecimal("25.00")));
+    }
+
+    @Test
+    void create_withDifferentKeysCreatesBoth() {
+        Long accountId = seededAccountId();
+        BigDecimal before = accountRepository.findById(accountId).orElseThrow().getBalance();
+
+        transactionService.create(accountId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("10.00"), null), "key-a");
+        transactionService.create(accountId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("10.00"), null), "key-b");
+
+        assertThat(accountRepository.findById(accountId).orElseThrow().getBalance())
+                .isEqualByComparingTo(before.add(new BigDecimal("20.00")));
+    }
+
+    @Test
+    void create_withoutKeyCreates() {
+        Long accountId = seededAccountId();
+        BigDecimal before = accountRepository.findById(accountId).orElseThrow().getBalance();
+
+        transactionService.create(accountId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("7.00"), null));
+
+        assertThat(accountRepository.findById(accountId).orElseThrow().getBalance())
+                .isEqualByComparingTo(before.add(new BigDecimal("7.00")));
+    }
+
+    @Test
+    void create_sameKeyAcrossDifferentAccountsDoesNotCollide() {
+        // The UNIQUE is (account_id, idempotency_key): two accounts may reuse a key.
+        Long sourceId = seededAccountId();
+        User other = userService.create(newUser("idem-other-acct", "idem-other-card"));
+        Long otherId = other.getAccount().getId();
+
+        Transaction a = transactionService.create(sourceId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("5.00"), null), "shared-key");
+        Transaction b = transactionService.create(otherId,
+                new TransactionRequestDto(TransactionType.DEPOSIT, new BigDecimal("5.00"), null), "shared-key");
+
+        assertThat(a.getId()).isNotEqualTo(b.getId());
+    }
+
+    @Test
+    void create_sameKeyOnTransferDoesNotDoubleMoveMoney() {
+        Long sourceId = seededAccountId();
+        User other = userService.create(newUser("idem-transfer-acct", "idem-transfer-card"));
+        Long destinationId = other.getAccount().getId();
+        BigDecimal sourceBefore = accountRepository.findById(sourceId).orElseThrow().getBalance();
+
+        Transaction first = transactionService.create(sourceId,
+                new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("30.00"), destinationId), "transfer-key");
+        Transaction retry = transactionService.create(sourceId,
+                new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("30.00"), destinationId), "transfer-key");
+
+        assertThat(retry.getId()).isEqualTo(first.getId());
+        assertThat(accountRepository.findById(sourceId).orElseThrow().getBalance())
+                .isEqualByComparingTo(sourceBefore.subtract(new BigDecimal("30.00")));
+    }
+
     // ---- aggregate ----
 
     @Test

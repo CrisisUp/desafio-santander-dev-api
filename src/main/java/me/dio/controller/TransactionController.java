@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -57,8 +58,9 @@ public record TransactionController(TransactionService transactionService) {
             @ApiResponse(responseCode = "404", description = "Account not found"),
             @ApiResponse(responseCode = "422", description = "Invalid transaction data or insufficient funds")
     })
-    public ResponseEntity<TransactionDto> create(@PathVariable Long id, @Valid @RequestBody TransactionRequestDto request) {
-        var transaction = transactionService.create(id, request);
+    public ResponseEntity<TransactionDto> create(@PathVariable Long id, @Valid @RequestBody TransactionRequestDto request,
+                                                 @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        var transaction = transactionService.create(id, request, idempotencyKey);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{tid}")
                 .buildAndExpand(transaction.getId())

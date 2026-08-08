@@ -10,6 +10,7 @@ import me.dio.domain.repository.TransactionTypeSummary;
 import me.dio.service.TransactionService;
 import me.dio.service.exception.BusinessException;
 import me.dio.service.exception.NotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,12 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public Transaction create(Long accountId, TransactionRequestDto request) {
+        return this.create(accountId, request, null);
+    }
+
+    @Override
+    @Transactional
+    public Transaction create(Long accountId, TransactionRequestDto request, String idempotencyKey) {
         ofNullable(request).orElseThrow(() -> new BusinessException("Transaction must not be null."));
         ofNullable(request.type()).orElseThrow(() -> new BusinessException("Transaction type must not be null."));
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -58,22 +65,43 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BusinessException("Transfer requires a destination account.");
         }
 
-        return switch (request.type()) {
-            case DEPOSIT -> {
-                // Locked for consistency with debits (a deposit concurrent with a
-                // transfer on the same account must not see a stale balance).
-                Account source = this.lockAccount(accountId);
-                source.setBalance(source.getBalance().add(request.amount()));
-                yield this.transactionRepository.save(request.toModel(source));
+        // Idempotency: a retry with the same key returns the original transaction
+        // instead of debiting twice. Backed by UNIQUE (account_id, idempotency_key).
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            var existing = this.transactionRepository.findByAccount_IdAndIdempotencyKey(accountId, idempotencyKey);
+            if (existing.isPresent()) {
+                return existing.get();
             }
-            case WITHDRAWAL, PAYMENT -> {
-                Account source = this.lockAccount(accountId);
-                this.requireFunds(source, request.amount(), request.type());
-                source.setBalance(source.getBalance().subtract(request.amount()));
-                yield this.transactionRepository.save(request.toModel(source));
-            }
-            case TRANSFER -> this.doTransfer(accountId, request);
-        };
+        }
+
+        try {
+            return switch (request.type()) {
+                case DEPOSIT -> {
+                    // Locked for consistency with debits (a deposit concurrent with a
+                    // transfer on the same account must not see a stale balance).
+                    Account source = this.lockAccount(accountId);
+                    source.setBalance(source.getBalance().add(request.amount()));
+                    yield this.saveWithKey(request.toModel(source), idempotencyKey);
+                }
+                case WITHDRAWAL, PAYMENT -> {
+                    Account source = this.lockAccount(accountId);
+                    this.requireFunds(source, request.amount(), request.type());
+                    source.setBalance(source.getBalance().subtract(request.amount()));
+                    yield this.saveWithKey(request.toModel(source), idempotencyKey);
+                }
+                case TRANSFER -> this.doTransfer(accountId, request, idempotencyKey);
+            };
+        } catch (DataIntegrityViolationException race) {
+            // Two concurrent retries with the same key: the second hit the UNIQUE
+            // constraint. Re-fetch and return the winner instead of a 500/422.
+            return this.transactionRepository.findByAccount_IdAndIdempotencyKey(accountId, idempotencyKey)
+                    .orElseThrow(() -> race);
+        }
+    }
+
+    private Transaction saveWithKey(Transaction tx, String idempotencyKey) {
+        tx.setIdempotencyKey(idempotencyKey);
+        return this.transactionRepository.save(tx);
     }
 
     /**
@@ -85,7 +113,7 @@ public class TransactionServiceImpl implements TransactionService {
      * crossed transfers cannot deadlock, and two concurrent debits on the same
      * source cannot both pass the funds check. Returns the debit leg.
      */
-    private Transaction doTransfer(Long accountId, TransactionRequestDto request) {
+    private Transaction doTransfer(Long accountId, TransactionRequestDto request, String idempotencyKey) {
         Long destinationId = request.destinationAccountId();
         if (destinationId.equals(accountId)) {
             throw new BusinessException("Source and destination accounts must differ.");
@@ -116,6 +144,7 @@ public class TransactionServiceImpl implements TransactionService {
         debit.setDestinationAccountId(destination.getId());
         debit.setCreatedAt(now);
         debit.setCredit(false);
+        debit.setIdempotencyKey(idempotencyKey);
         this.transactionRepository.save(debit);
 
         Transaction credit = new Transaction();
@@ -125,6 +154,9 @@ public class TransactionServiceImpl implements TransactionService {
         credit.setDestinationAccountId(source.getId());
         credit.setCreatedAt(now);
         credit.setCredit(true);
+        // Same key on the credit leg so a retry scoped to the destination also
+        // dedupes; the UNIQUE constraint is per account, so no collision.
+        credit.setIdempotencyKey(idempotencyKey);
         this.transactionRepository.save(credit);
 
         return debit;

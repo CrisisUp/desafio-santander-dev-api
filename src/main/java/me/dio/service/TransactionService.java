@@ -11,5 +11,6 @@ import java.util.List;
 public interface TransactionService {
     Page<Transaction> findByAccountId(Long accountId, Pageable pageable);
     Transaction create(Long accountId, TransactionRequestDto request);
+    Transaction create(Long accountId, TransactionRequestDto request, String idempotencyKey);
     List<TransactionTypeSummary> summarizeByType();
 }

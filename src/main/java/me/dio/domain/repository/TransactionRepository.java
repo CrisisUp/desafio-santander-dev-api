@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import me.dio.domain.model.Transaction;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -18,6 +19,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // so the DTO can render it after the session closes (same pattern as UserRepository).
     @EntityGraph(attributePaths = {"account"})
     Page<Transaction> findByAccount_IdOrderByCreatedAtDesc(Long accountId, Pageable pageable);
+
+    // Idempotency: a retry with the same key returns the already-created transaction.
+    Optional<Transaction> findByAccount_IdAndIdempotencyKey(Long accountId, String idempotencyKey);
 
     // Whole-system aggregate: SUM(amount) and COUNT per transaction type.
     // Types with zero rows (e.g. TRANSFER in the seed) produce no entry — the

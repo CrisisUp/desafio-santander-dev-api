@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { firstValueFrom } from 'rxjs';
 import { TransactionListComponent, buildAccountOptions } from './transaction-list';
+import { TransactionService } from '../transaction.service';
 import { User } from '../user';
 
 describe('TransactionListComponent', () => {
@@ -158,6 +160,23 @@ describe('TransactionListComponent', () => {
         credit: true,
       })
     ).toBe('balance-positive');
+  });
+
+  it('sends an Idempotency-Key header on create', async () => {
+    const fixture = TestBed.createComponent(TransactionListComponent);
+    const comp = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    // Force a known key (the field is private; bracket access keeps it out of TS).
+    comp['currentIdempotencyKey'] = 'test-uuid-123';
+    comp.form.patchValue({ type: 'DEPOSIT', amount: 10, destinationAccountId: null });
+
+    const svc = TestBed.inject(TransactionService);
+    const done = firstValueFrom(svc.create(comp.accountId, comp.buildPayload(), comp['currentIdempotencyKey']));
+    const req = http.expectOne((r) => r.url === `/accounts/${comp.accountId}/transactions`);
+    expect(req.request.headers.get('Idempotency-Key')).toBe('test-uuid-123');
+    req.flush({ id: 1, type: 'DEPOSIT', amount: 10, accountId: comp.accountId, createdAt: '', credit: true });
+    await done;
+    http.verify();
   });
 });
 

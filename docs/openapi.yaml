@@ -199,10 +199,17 @@ paths:
       tags:
       - Transactions Controller
       summary: Create a transaction
-      description: "DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance. A TRANSFER is double-entry: it also writes a credit leg (type TRANSFER, credit=true) on the destination account. The response is the DEBIT leg on the source."
+      description: "DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance. A TRANSFER is double-entry: it also writes a credit leg (type TRANSFER, credit=true) on the destination account. The response is the DEBIT leg on the source. Idempotent: send an Idempotency-Key header per intent; a retry with the same key returns the original transaction instead of debiting twice."
       operationId: createTransaction
       parameters:
       - $ref: '#/components/parameters/PathId'
+      - name: Idempotency-Key
+        in: header
+        required: false
+        description: UUID per intent; retries with the same key are deduplicated (per account)
+        schema:
+          type: string
+          format: uuid
       requestBody:
         content:
           application/json:

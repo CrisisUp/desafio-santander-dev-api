@@ -45,6 +45,12 @@ public class Transaction {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // Idempotency-Key header from the creating request, so a duplicate-click or
+    // retry with the same key returns the original transaction instead of
+    // debiting twice. UNIQUE (account_id, idempotency_key) in V8.
+    @Column(name = "idempotency_key")
+    private String idempotencyKey;
+
     // Direction of the movement. A TRANSFER now writes TWO rows (one per account):
     // the debit leg (credit=false) on the source and the credit leg (credit=true)
     // on the destination. DEPOSITs are credits; WITHDRAWAL/PAYMENT are debits.
@@ -105,5 +111,13 @@ public class Transaction {
 
     public void setCredit(boolean credit) {
         this.credit = credit;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }

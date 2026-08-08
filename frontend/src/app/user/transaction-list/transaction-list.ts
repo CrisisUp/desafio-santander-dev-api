@@ -54,6 +54,8 @@ export class TransactionListComponent implements OnInit {
   pageSize = 10;
   pageIndex = 0;
   displayedColumns = ['date', 'type', 'detail', 'amount'];
+  /** Idempotency-Key for the current operation form (regenerated on open). */
+  private currentIdempotencyKey: string = crypto.randomUUID();
 
   form: FormGroup;
 
@@ -150,6 +152,11 @@ export class TransactionListComponent implements OnInit {
 
   toggleForm(): void {
     this.showForm.set(!this.showForm());
+    if (this.showForm()) {
+      // New intent = new idempotency key. Retries of the SAME submit reuse it,
+      // so a duplicate click can't double-debit.
+      this.currentIdempotencyKey = crypto.randomUUID();
+    }
   }
 
   /**
@@ -200,7 +207,7 @@ export class TransactionListComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    this.transactionService.create(this.accountId, this.buildPayload()).subscribe({
+    this.transactionService.create(this.accountId, this.buildPayload(), this.currentIdempotencyKey).subscribe({
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);

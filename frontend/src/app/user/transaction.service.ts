@@ -20,9 +20,13 @@ export class TransactionService {
     return this.http.get<TransactionPage>(`${this.baseUrl}/${accountId}/transactions`, { params });
   }
 
-  create(accountId: number, tx: TransactionRequest): Observable<Transaction> {
+  create(accountId: number, tx: TransactionRequest, idempotencyKey: string): Observable<Transaction> {
+    // Idempotency-Key makes the POST safe against duplicate clicks / network
+    // retries: the backend debits once and returns the original on retries.
     return this.http
-      .post<Transaction>(`${this.baseUrl}/${accountId}/transactions`, tx)
+      .post<Transaction>(`${this.baseUrl}/${accountId}/transactions`, tx, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      })
       .pipe(catchError(this.handleError));
   }
 
