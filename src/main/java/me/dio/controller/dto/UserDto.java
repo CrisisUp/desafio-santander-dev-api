@@ -15,8 +15,10 @@ public record UserDto(
         @NotBlank String name,
         @NotNull AccountDto account,
         @NotNull CardDto card,
-        List<FeatureDto> features,
-        List<NewsDto> news) {
+        // Non-null for parity with the service, which rejects null lists on update.
+        // The frontend/ETL always send arrays (possibly empty) for these.
+        @NotNull List<FeatureDto> features,
+        @NotNull List<NewsDto> news) {
 
     public UserDto(User model) {
         this(

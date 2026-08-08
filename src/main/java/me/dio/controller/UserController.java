@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import me.dio.controller.dto.UniquenessCheckDto;
 import me.dio.controller.dto.UserDto;
 import me.dio.service.UserService;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,20 @@ public record UserController(UserService userService) {
         var users = userService.findAll(name, pageable);
         var usersDto = users.map(UserDto::new);
         return ResponseEntity.ok(usersDto);
+    }
+
+    @GetMapping("/check")
+    @Operation(summary = "Check account/card number uniqueness",
+            description = "Returns whether the given account and card numbers are still free. "
+                    + "Pass excludeId when editing so the user's own numbers don't collide with themselves.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operation successful")
+    })
+    public ResponseEntity<UniquenessCheckDto> checkUniqueness(
+            @RequestParam(required = false) String accountNumber,
+            @RequestParam(required = false) String cardNumber,
+            @RequestParam(required = false) Long excludeId) {
+        return ResponseEntity.ok(userService.checkUniqueness(accountNumber, cardNumber, excludeId));
     }
 
     @GetMapping("/{id}")

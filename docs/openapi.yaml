@@ -70,6 +70,37 @@ paths:
                 $ref: '#/components/schemas/UserDto'
         '422':
           $ref: '#/components/responses/PlainError'
+  /users/check:
+    get:
+      tags:
+      - Users Controller
+      summary: Check account/card number uniqueness
+      description: Returns whether the given account and card numbers are still free. Pass excludeId when editing so the user's own numbers don't collide with themselves.
+      operationId: checkUniqueness
+      parameters:
+      - name: accountNumber
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cardNumber
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: excludeId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UniquenessCheckDto'
   /users/{id}:
     get:
       tags:
@@ -287,6 +318,13 @@ components:
           type: string
       required:
       - description
+    UniquenessCheckDto:
+      type: object
+      properties:
+        accountNumberAvailable:
+          type: boolean
+        cardNumberAvailable:
+          type: boolean
     UserDto:
       type: object
       required:

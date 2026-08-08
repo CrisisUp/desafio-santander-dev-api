@@ -313,6 +313,43 @@ class UserServiceTest {
                 .isInstanceOf(NotFoundException.class);
     }
 
+    // ---- checkUniqueness ----
+
+    @Test
+    void checkUniqueness_returnsAvailableWhenUnused() {
+        var result = userService.checkUniqueness("999-unused-account", "999-unused-card", null);
+        assertThat(result.accountNumberAvailable()).isTrue();
+        assertThat(result.cardNumberAvailable()).isTrue();
+    }
+
+    @Test
+    void checkUniqueness_reportsTakenForSeedAccountAndCard() {
+        // V5 seed: account '0002' and card '**** **** **** 2201' exist.
+        var result = userService.checkUniqueness("0002", "**** **** **** 2201", null);
+        assertThat(result.accountNumberAvailable()).isFalse();
+        assertThat(result.cardNumberAvailable()).isFalse();
+    }
+
+    @Test
+    void checkUniqueness_ignoresOwnNumbersOnEdit() {
+        User created = userService.create(newUser("check-own-acct", "check-own-card"));
+        // Editing this user: its own account/card must not be reported as taken.
+        var result = userService.checkUniqueness("check-own-acct", "check-own-card", created.getId());
+        assertThat(result.accountNumberAvailable()).isTrue();
+        assertThat(result.cardNumberAvailable()).isTrue();
+        // But ANOTHER user's number is still taken even when editing this one.
+        var otherTaken = userService.checkUniqueness("0002", "**** **** **** 2201", created.getId());
+        assertThat(otherTaken.accountNumberAvailable()).isFalse();
+        assertThat(otherTaken.cardNumberAvailable()).isFalse();
+    }
+
+    @Test
+    void checkUniqueness_blankValuesAreAvailable() {
+        var result = userService.checkUniqueness("  ", null, null);
+        assertThat(result.accountNumberAvailable()).isTrue();
+        assertThat(result.cardNumberAvailable()).isTrue();
+    }
+
     // ---- helpers ----
 
     private User newUser(String accountNumber, String cardNumber) {

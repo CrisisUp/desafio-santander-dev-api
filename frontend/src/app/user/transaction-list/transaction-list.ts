@@ -72,12 +72,15 @@ export class TransactionListComponent implements OnInit {
 
     this.form = this.fb.group({
       type: ['DEPOSIT', Validators.required],
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.01), this.balanceValidator.bind(this)]],
       // The destination is required only for TRANSFER (validated conditionally).
       destinationAccountId: [null, this.transferDestinationValidator.bind(this)],
     });
-    // Re-run the conditional validation when the type changes.
-    this.form.get('type')?.valueChanges.subscribe(() => this.form.get('destinationAccountId')?.updateValueAndValidity());
+    // Re-run the conditional validations when the type or the balance changes.
+    this.form.get('type')?.valueChanges.subscribe(() => {
+      this.form.get('destinationAccountId')?.updateValueAndValidity();
+      this.form.get('amount')?.updateValueAndValidity();
+    });
 
     this.reload$
       .pipe(
@@ -123,7 +126,11 @@ export class TransactionListComponent implements OnInit {
 
   private loadUser(): void {
     this.userService.get(this.accountId).subscribe({
-      next: (user) => this.user.set(user),
+      next: (user) => {
+        this.user.set(user);
+        // The balance validator reads the just-loaded balance.
+        this.form.get('amount')?.updateValueAndValidity();
+      },
       error: (err: Error) => {
         this.snackBar.open(err.message, 'Fechar', { duration: 4000 });
         this.router.navigate(['/users']);
@@ -153,6 +160,24 @@ export class TransactionListComponent implements OnInit {
     const type = this.form?.get('type')?.value;
     if (type === 'TRANSFER' && (control.value == null || control.value === '')) {
       return { required: true };
+    }
+    return null;
+  }
+
+  /**
+   * Warns before submit when a debit (WITHDRAWAL/PAYMENT/TRANSFER) exceeds the
+   * account balance. DEPOSIT never fails this. The backend remains the source
+   * of truth — this is UX polish, not a safety control (the lock does that).
+   */
+  balanceValidator(control: AbstractControl): ValidationErrors | null {
+    const type = this.form?.get('type')?.value;
+    const balance = this.user()?.account?.balance;
+    if (type == null || type === 'DEPOSIT' || balance == null || control.value == null) {
+      return null;
+    }
+    const amount = Number(control.value);
+    if (Number.isFinite(amount) && amount > balance) {
+      return { insufficientFunds: true };
     }
     return null;
   }

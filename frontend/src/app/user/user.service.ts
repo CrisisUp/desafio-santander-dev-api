@@ -4,6 +4,11 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { User, UserPage } from './user';
 
+export interface UniquenessCheck {
+  accountNumberAvailable: boolean;
+  cardNumberAvailable: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly baseUrl = '/users';
@@ -35,6 +40,15 @@ export class UserService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(catchError(this.handleError));
+  }
+
+  /** Whether the account/card numbers are still free (excludeId = user being edited). */
+  checkUniqueness(accountNumber?: string, cardNumber?: string, excludeId?: number): Observable<UniquenessCheck> {
+    const params: Record<string, string> = {};
+    if (accountNumber) params['accountNumber'] = accountNumber;
+    if (cardNumber) params['cardNumber'] = cardNumber;
+    if (excludeId != null) params['excludeId'] = String(excludeId);
+    return this.http.get<UniquenessCheck>(`${this.baseUrl}/check`, { params }).pipe(catchError(this.handleError));
   }
 
   private handleError(err: HttpErrorResponse): Observable<never> {

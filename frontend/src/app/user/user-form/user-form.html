@@ -1,5 +1,5 @@
 <div class="page-container">
-  <h2>{{ isEdit ? 'Editar usuário' : 'Novo usuário' }}</h2>
+  <h2>{{ isEdit() ? 'Editar usuário' : 'Novo usuário' }}</h2>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="user-form">
     <mat-form-field appearance="outline">
@@ -14,6 +14,7 @@
         <mat-label>Número *</mat-label>
         <input matInput formControlName="number" placeholder="0000" />
         <mat-error *ngIf="showError(form.get('account.number'))">Número é obrigatório.</mat-error>
+        <mat-error *ngIf="form.get('account.number')?.hasError('accountTaken')">Número de conta já em uso.</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Agência *</mat-label>
@@ -38,6 +39,7 @@
         <mat-label>Número *</mat-label>
         <input matInput formControlName="number" placeholder="**** **** **** 0000" />
         <mat-error *ngIf="showError(form.get('card.number'))">Número é obrigatório.</mat-error>
+        <mat-error *ngIf="form.get('card.number')?.hasError('cardTaken')">Número de cartão já em uso.</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Limite</mat-label>
@@ -87,12 +89,12 @@
     </fieldset>
 
     <div class="actions">
-      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving">
-        <mat-icon *ngIf="!saving">save</mat-icon>
-        <mat-spinner *ngIf="saving" diameter="18" class="submit-spinner"></mat-spinner>
-        {{ saving ? 'Salvando…' : 'Salvar' }}
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || form.status === 'PENDING' || saving()">
+        <mat-icon *ngIf="!saving()">save</mat-icon>
+        <mat-spinner *ngIf="saving()" diameter="18" class="submit-spinner"></mat-spinner>
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
       </button>
-      <button mat-button type="button" routerLink="/users" [disabled]="saving">Cancelar</button>
+      <button mat-button type="button" routerLink="/users" [disabled]="saving()">Cancelar</button>
     </div>
   </form>
 </div>

@@ -139,6 +139,12 @@ public class TransactionServiceImpl implements TransactionService {
      * negative. Runs before any balance is mutated, so a failure aborts the
      * whole unit with no partial change. The calling code holds the account's
      * pessimistic lock, so the balance read here is the latest committed one.
+     *
+     * ponytail: only the balance counts — Account.limit (additional_limit) is
+     * decorative and never permits an overdraft. If a "cheque especial" rule is
+     * wanted later, the limit must be added here AND mirrored in the frontend's
+     * balanceValidator (frontend/src/app/user/transaction-list/transaction-list.ts),
+     * keeping both layers in sync.
      */
     private void requireFunds(Account account, BigDecimal amount, TransactionType type) {
         if (account.getBalance().compareTo(amount) < 0) {

@@ -1,5 +1,6 @@
 package me.dio.service.impl;
 
+import me.dio.controller.dto.UniquenessCheckDto;
 import me.dio.domain.model.Feature;
 import me.dio.domain.model.News;
 import me.dio.domain.model.User;
@@ -138,6 +139,22 @@ public class UserServiceImpl implements UserService {
         this.validateChangeableId(id, "deleted");
         User dbUser = this.findById(id);
         this.userRepository.delete(dbUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UniquenessCheckDto checkUniqueness(String accountNumber, String cardNumber, Long excludeId) {
+        // Blank values are "available": the form only calls with filled fields,
+        // and the create/update flow enforces requiredness separately.
+        boolean accountAvailable = accountNumber == null || accountNumber.isBlank()
+                || (excludeId == null
+                        ? !this.userRepository.existsByAccountNumber(accountNumber)
+                        : !this.userRepository.existsByAccountNumberAndIdNot(accountNumber, excludeId));
+        boolean cardAvailable = cardNumber == null || cardNumber.isBlank()
+                || (excludeId == null
+                        ? !this.userRepository.existsByCardNumber(cardNumber)
+                        : !this.userRepository.existsByCardNumberAndIdNot(cardNumber, excludeId));
+        return new UniquenessCheckDto(accountAvailable, cardAvailable);
     }
 
     /**

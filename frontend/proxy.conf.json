@@ -1,5 +1,5 @@
 {
-  "^/users(\\?.*)?$|^/users/[0-9]+(\\?.*)?$|^/accounts/[0-9]+/transactions(\\?.*)?$|^/accounts/transactions/summary(\\?.*)?$": {
+  "^/users(\\?.*)?$|^/users/check(\\?.*)?$|^/users/[0-9]+(\\?.*)?$|^/accounts/[0-9]+/transactions(\\?.*)?$|^/accounts/transactions/summary(\\?.*)?$": {
     "target": "http://localhost:8080",
     "secure": false,
     "changeOrigin": true

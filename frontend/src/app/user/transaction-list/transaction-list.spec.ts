@@ -79,6 +79,33 @@ describe('TransactionListComponent', () => {
     expect(comp.form.get('amount')!.valid).toBe(true);
   });
 
+  it('flags insufficient funds before submit for a debit exceeding balance', () => {
+    const fixture = TestBed.createComponent(TransactionListComponent);
+    const comp = fixture.componentInstance;
+    // The account header supplies the balance to the validator.
+    comp.user.set({
+      id: 3,
+      name: 'Bruno',
+      account: { id: 3, number: '0003', agency: '0001', balance: 100, limit: 500 },
+      card: { number: 'x', limit: 0 },
+      features: [],
+      news: [],
+    });
+    const amount = comp.form.get('amount')!;
+
+    // Debit above balance → insufficient.
+    comp.form.patchValue({ type: 'WITHDRAWAL', amount: 150 });
+    expect(amount.hasError('insufficientFunds')).toBe(true);
+
+    // Debit within balance → OK.
+    comp.form.patchValue({ type: 'WITHDRAWAL', amount: 50 });
+    expect(amount.hasError('insufficientFunds')).toBe(false);
+
+    // DEPOSIT is never limited by balance.
+    comp.form.patchValue({ type: 'DEPOSIT', amount: 5000 });
+    expect(amount.hasError('insufficientFunds')).toBe(false);
+  });
+
   it('amountValue signs debits negative and credits positive', () => {
     const fixture = TestBed.createComponent(TransactionListComponent);
     const comp = fixture.componentInstance;
