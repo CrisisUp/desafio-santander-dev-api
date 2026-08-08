@@ -1,35 +1,5 @@
-/* Layout (duplicated locally from user-list.css; promote to styles.scss when a
-   third view needs it). */
-.page-container {
-  padding: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.toolbar h2 {
-  margin: 0;
-}
-
-.result-count {
-  color: var(--app-on-surface-variant);
-  font-size: 13px;
-  margin: 4px 0 12px;
-}
-
-.users-card {
-  background: var(--app-surface-container);
-  border-radius: var(--app-radius-md);
-  overflow: hidden;
-  box-shadow: var(--app-elevation-shadow-raised);
-  margin-bottom: 16px;
-}
+/* Shared layout (page-container, toolbar, users-card, ...) lives in
+   styles.scss — this file keeps only the dashboard-specific rules. */
 
 /* KPI row: a handful of headline numbers, no series color. */
 .kpi-row {

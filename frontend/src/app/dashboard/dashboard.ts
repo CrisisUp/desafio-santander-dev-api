@@ -33,6 +33,9 @@ export class DashboardComponent {
         switchMap(() => {
           this.loading.set(true);
           return combineLatest([
+            // ponytail: capped at the first 100 users — fine today (seed has 41),
+            // but the KPIs/charts go silently incomplete past 100. Upgrade path:
+            // paginate until exhausted, or delegate the aggregation to the API.
             this.userService.list(0, 100).pipe(catchError((err) => this.fail(err))),
             this.transactionService.getStats().pipe(catchError((err) => this.fail(err))),
           ]);

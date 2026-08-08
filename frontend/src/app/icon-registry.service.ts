@@ -16,6 +16,7 @@ export class BrandIconService {
     'cards',
     'credit',
     'insurance',
+    'others',
   ];
 
   constructor(registry: MatIconRegistry, sanitizer: DomSanitizer) {

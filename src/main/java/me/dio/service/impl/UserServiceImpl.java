@@ -151,10 +151,16 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("%s list must not be null.".formatted(type));
         }
         var persistedIds = persisted.stream().map(idGetter).collect(java.util.stream.Collectors.toSet());
+        var seen = new java.util.HashSet<Long>();
         for (T item : incoming) {
             Long id = idGetter.apply(item);
             if (id == null || !persistedIds.contains(id)) {
                 throw new BusinessException("%s ID must belong to this user.".formatted(type));
+            }
+            // The join table has UNIQUE(features_id/news_id); a duplicate in the
+            // same list would violate it — reject here as a clean 422.
+            if (!seen.add(id)) {
+                throw new BusinessException("Duplicate %s ID %d in the same list.".formatted(type, id));
             }
         }
     }

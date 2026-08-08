@@ -57,14 +57,16 @@ describe('UserFormComponent', () => {
     comp.userId = 5;
     comp.form.patchValue({
       name: 'Edit',
-      account: { number: '0001', agency: '0001', balance: 10, limit: 100 },
-      card: { number: 'x', limit: 500 },
+      account: { id: 7, number: '0001', agency: '0001', balance: 10, limit: 100 },
+      card: { id: 8, number: 'x', limit: 500 },
     });
     comp.addFeature();
     comp.features.controls[0].patchValue({ id: 3, description: 'f', icon: '' });
 
     const payload = comp.buildPayload();
     expect(payload.id).toBe(5);
+    expect(payload.account.id).toBe(7);
+    expect(payload.card.id).toBe(8);
     expect(payload.features[0].id).toBe(3);
   });
 });

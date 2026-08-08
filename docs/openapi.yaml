@@ -1,11 +1,75 @@
+# Canonical OpenAPI spec for the Santander Dev Week API.
+# Mirrors the annotated controllers (UserController, TransactionController) and
+# the actual JSON shapes returned by the Spring Boot app, including:
+#   - paged list responses (Spring Page) with page/size/sort query params
+#   - plain-text error bodies (404/422) from GlobalExceptionHandler
+#   - the /accounts/transactions/summary aggregate endpoint
+# Generated docs (Swagger UI) live at /swagger-ui/index.html from /v3/api-docs;
+# this file is the human-maintained canonical source.
 openapi: 3.1.0
+info:
+  title: Santander Dev Week API
+  description: RESTful API for managing users, accounts and account statements (Santander Dev Week 2026).
+  version: 0.0.1-SNAPSHOT
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+security: []
 servers:
 - url: /
   description: Default Server URL
 tags:
 - name: Users Controller
   description: RESTful API for managing users.
+- name: Transactions Controller
+  description: RESTful API for account statements.
 paths:
+  /users:
+    get:
+      tags:
+      - Users Controller
+      summary: Get all users
+      description: Retrieve a paged list of all registered users, optionally filtered by name
+      operationId: findAll
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/SizeParam'
+      - $ref: '#/components/parameters/SortParam'
+      - name: name
+        in: query
+        description: Partial, case-insensitive name filter
+        required: false
+        schema:
+          type: string
+      # The list endpoint returns 200; errors are handled by GlobalExceptionHandler as a 500.
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageUserDto'
+    post:
+      tags:
+      - Users Controller
+      summary: Create a new user
+      description: Create a new user and return the created user's data
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+        required: true
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '422':
+          $ref: '#/components/responses/PlainError'
   /users/{id}:
     get:
       tags:
@@ -14,38 +78,24 @@ paths:
       description: Retrieve a specific user based on its ID
       operationId: findById
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/PathId'
       responses:
         '200':
           description: Operation successful
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
         '404':
-          description: User not found
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/UserDto'
+          $ref: '#/components/responses/PlainError'
     put:
       tags:
       - Users Controller
       summary: Update a user
       description: Update the data of an existing user based on its ID
-      operationId: update
+      operationId: updateUser
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/PathId'
       requestBody:
         content:
           application/json:
@@ -53,119 +103,75 @@ paths:
               $ref: '#/components/schemas/UserDto'
         required: true
       responses:
-        '422':
-          description: Invalid user data provided
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/UserDto'
         '200':
           description: User updated successfully
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
         '404':
-          description: User not found
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/UserDto'
+          $ref: '#/components/responses/PlainError'
+        '422':
+          $ref: '#/components/responses/PlainError'
     delete:
       tags:
       - Users Controller
       summary: Delete a user
       description: Delete an existing user based on its ID
-      operationId: delete
+      operationId: deleteUser
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/PathId'
       responses:
         '204':
           description: User deleted successfully
         '404':
-          description: User not found
-  /users:
+          $ref: '#/components/responses/PlainError'
+  /accounts/transactions/summary:
     get:
       tags:
-      - Users Controller
-      summary: Get all users
-      description: Retrieve a list of all registered users
-      operationId: findAll
+      - Transactions Controller
+      summary: Transaction totals by type
+      description: Aggregate SUM(amount) and COUNT per transaction type across all accounts. Types with no rows are omitted (the frontend zero-fills them).
+      operationId: summarizeByType
+      # The summary endpoint returns 200; errors are handled by GlobalExceptionHandler as a 500.
       responses:
         '200':
           description: Operation successful
           content:
-            '*/*':
+            application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserDto'
-    post:
-      tags:
-      - Users Controller
-      summary: Create a new user
-      description: Create a new user and return the created user's data
-      operationId: create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserDto'
-        required: true
-      responses:
-        '422':
-          description: Invalid user data provided
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/UserDto'
-        '201':
-          description: User created successfully
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/UserDto'
+                  $ref: '#/components/schemas/TransactionTypeSummaryDto'
   /accounts/{id}/transactions:
     get:
       tags:
       - Transactions Controller
       summary: List transactions
-      description: Retrieve a paged statement for an account
+      description: Retrieve a paged statement for an account (newest first)
       operationId: findByAccountId
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/PathId'
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/SizeParam'
+      - $ref: '#/components/parameters/SortParam'
       responses:
         '200':
           description: Operation successful
           content:
-            '*/*':
+            application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TransactionDto'
+                $ref: '#/components/schemas/PageTransactionDto'
+        '404':
+          $ref: '#/components/responses/PlainError'
     post:
       tags:
       - Transactions Controller
       summary: Create a transaction
       description: DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance
-      operationId: create
+      operationId: createTransaction
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/PathId'
       requestBody:
         content:
           application/json:
@@ -173,25 +179,60 @@ paths:
               $ref: '#/components/schemas/TransactionRequestDto'
         required: true
       responses:
-        '404':
-          description: Account not found
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TransactionDto'
-        '422':
-          description: Invalid transaction data or insufficient funds
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TransactionDto'
         '201':
           description: Transaction created
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: '#/components/schemas/TransactionDto'
+        '404':
+          $ref: '#/components/responses/PlainError'
+        '422':
+          $ref: '#/components/responses/PlainError'
 components:
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    PageParam:
+      name: page
+      in: query
+      description: Zero-based page index
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 0
+    SizeParam:
+      name: size
+      in: query
+      description: Page size
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 20
+    SortParam:
+      name: sort
+      in: query
+      description: Sort as `property,direction` (e.g. `account.balance,desc`). Repeatable.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+  responses:
+    PlainError:
+      description: Plain-text error message (from GlobalExceptionHandler)
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Resource not found.
   schemas:
     AccountDto:
       type: object
@@ -207,6 +248,9 @@ components:
           type: number
         limit:
           type: number
+      required:
+      - number
+      - agency
     CardDto:
       type: object
       properties:
@@ -217,6 +261,8 @@ components:
           type: string
         limit:
           type: number
+      required:
+      - number
     FeatureDto:
       type: object
       properties:
@@ -227,6 +273,8 @@ components:
           type: string
         description:
           type: string
+      required:
+      - description
     NewsDto:
       type: object
       properties:
@@ -237,6 +285,8 @@ components:
           type: string
         description:
           type: string
+      required:
+      - description
     UserDto:
       type: object
       properties:
@@ -257,6 +307,87 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NewsDto'
+      required:
+      - name
+      - account
+      - card
+      - features
+      - news
+    Page:
+      type: object
+      properties:
+        content:
+          type: array
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: '#/components/schemas/Sort'
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        sort:
+          $ref: '#/components/schemas/Sort'
+        offset:
+          type: integer
+          format: int64
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    Sort:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+        empty:
+          type: boolean
+    PageUserDto:
+      allOf:
+      - $ref: '#/components/schemas/Page'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/UserDto'
+    PageTransactionDto:
+      allOf:
+      - $ref: '#/components/schemas/Page'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/TransactionDto'
     TransactionDto:
       type: object
       properties:
@@ -264,19 +395,16 @@ components:
           type: integer
           format: int64
         type:
-          type: string
-          enum:
-          - DEPOSIT
-          - WITHDRAWAL
-          - TRANSFER
-          - PAYMENT
+          $ref: '#/components/schemas/TransactionType'
         amount:
           type: number
         accountId:
           type: integer
           format: int64
         destinationAccountId:
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: int64
         createdAt:
           type: string
@@ -288,14 +416,29 @@ components:
       - amount
       properties:
         type:
-          type: string
-          enum:
-          - DEPOSIT
-          - WITHDRAWAL
-          - TRANSFER
-          - PAYMENT
+          $ref: '#/components/schemas/TransactionType'
         amount:
           type: number
+          description: Must be greater than zero
+          exclusiveMinimum: 0
         destinationAccountId:
           type: integer
           format: int64
+          description: Required for TRANSFER; ignored otherwise
+    TransactionTypeSummaryDto:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        total:
+          type: number
+        count:
+          type: integer
+          format: int64
+    TransactionType:
+      type: string
+      enum:
+      - DEPOSIT
+      - WITHDRAWAL
+      - TRANSFER
+      - PAYMENT

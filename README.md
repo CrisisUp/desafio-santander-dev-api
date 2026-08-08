@@ -26,8 +26,6 @@ Diferente da versão original, este repositório foca na automação de dados e 
 
 ## 📊 Domínio da API (Diagrama de Classes)
 
-Snippet de código
-
 ```classDiagram
   class User {
     -String name

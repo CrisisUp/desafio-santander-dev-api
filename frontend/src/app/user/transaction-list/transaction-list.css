@@ -1,24 +1,10 @@
-.page-container {
-  padding: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
+/* Shared layout (page-container, toolbar, users-card, skeleton, ...) lives in
+   styles.scss — this file keeps only the transaction-list-specific rules. */
 
 .toolbar > div {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.toolbar h2 {
-  margin: 0;
 }
 
 .back-button {
@@ -51,16 +37,6 @@
   font-weight: 600;
 }
 
-.balance-positive {
-  color: var(--app-secondary);
-  font-weight: 500;
-}
-
-.balance-negative {
-  color: var(--app-primary);
-  font-weight: 500;
-}
-
 /* New-operation form. */
 .operation-form {
   display: flex;
@@ -85,68 +61,4 @@
   display: inline-block;
   margin-right: 8px;
   vertical-align: middle;
-}
-
-/* Reuse the elevated card + table pattern. */
-.users-card {
-  background: var(--app-surface-container);
-  border-radius: var(--app-radius-md);
-  overflow: hidden;
-  box-shadow: var(--app-elevation-shadow-raised);
-  margin-bottom: 16px;
-}
-
-.users-table {
-  width: 100%;
-}
-
-.mat-mdc-paginator {
-  border-top: 1px solid var(--app-outline);
-}
-
-.skeleton-list {
-  margin-bottom: 16px;
-}
-
-.skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--app-outline);
-}
-
-.skeleton-block {
-  height: 16px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--app-surface-container-high) 25%,
-    var(--app-surface) 50%,
-    var(--app-surface-container-high) 75%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-pulse 1.4s ease infinite;
-}
-
-@keyframes skeleton-pulse {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.empty-state {
-  color: var(--app-on-surface-variant);
-  text-align: center;
-  padding: 24px;
-}
-
-.empty-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--app-outline);
 }

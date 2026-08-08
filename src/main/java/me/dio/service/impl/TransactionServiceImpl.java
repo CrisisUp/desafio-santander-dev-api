@@ -34,6 +34,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(readOnly = true)
     public Page<Transaction> findByAccountId(Long accountId, Pageable pageable) {
+        // Keep GET and POST consistent: an unknown account is 404, not an empty page.
+        this.accountRepository.findById(accountId).orElseThrow(NotFoundException::new);
         return this.transactionRepository.findByAccount_IdOrderByCreatedAtDesc(accountId, pageable);
     }
 

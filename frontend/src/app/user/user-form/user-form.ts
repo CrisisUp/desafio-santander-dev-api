@@ -45,12 +45,14 @@ export class UserFormComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', Validators.required],
       account: this.fb.group({
+        id: [null],
         number: ['', Validators.required],
         agency: ['', Validators.required],
         balance: [0, Validators.required],
         limit: [0, Validators.required],
       }),
       card: this.fb.group({
+        id: [null],
         number: ['', Validators.required],
         limit: [0, Validators.required],
       }),
@@ -99,6 +101,7 @@ export class UserFormComponent implements OnInit {
       'conta corrente': 'account',
       cartões: 'cards',
       crédito: 'credit',
+      investimentos: 'others',
       seguros: 'insurance',
       'seguro casa': 'insurance',
     };
@@ -129,12 +132,14 @@ export class UserFormComponent implements OnInit {
     this.form.patchValue({
       name: user.name,
       account: {
+        id: user.account.id ?? null,
         number: user.account.number,
         agency: user.account.agency,
         balance: user.account.balance,
         limit: user.account.limit,
       },
       card: {
+        id: user.card.id ?? null,
         number: user.card.number,
         limit: user.card.limit,
       },
@@ -180,11 +185,20 @@ export class UserFormComponent implements OnInit {
       ...(item.icon ? { icon: item.icon } : {}),
     });
 
+    // On create the children must NOT carry ids (the API rejects pre-persisted ids
+    // with 422); on edit they carry the persisted ids so the API validates ownership.
+    const account = { number: value.account.number, agency: value.account.agency, balance: value.account.balance, limit: value.account.limit };
+    const card = { number: value.card.number, limit: value.card.limit };
+    if (this.isEdit) {
+      Object.assign(account, { id: value.account.id });
+      Object.assign(card, { id: value.card.id });
+    }
+
     return {
       ...(this.isEdit && this.userId !== null ? { id: this.userId } : {}),
       name: value.name,
-      account: { number: value.account.number, agency: value.account.agency, balance: value.account.balance, limit: value.account.limit },
-      card: { number: value.card.number, limit: value.card.limit },
+      account,
+      card,
       features: value.features.map(mapItem),
       news: value.news.map(mapItem),
     };

@@ -267,6 +267,25 @@ class UserServiceTest {
     }
 
     @Test
+    void update_rejectsDuplicateFeatureInSameList() {
+        // Regression: the join table has UNIQUE(features_id), so listing the same
+        // feature twice in one update would violate it — reject as a clean 422.
+        User created = userService.create(newUserWithFeature("acct-df", "card-df", "feat-df"));
+        Long featureId = created.getFeatures().get(0).getId();
+
+        User update = newUserWithFeature("acct-df", "card-df", "feat-df");
+        update.setId(created.getId());
+        update.getAccount().setId(created.getAccount().getId());
+        update.getCard().setId(created.getCard().getId());
+        update.getFeatures().get(0).setId(featureId);
+        update.getFeatures().add(created.getFeatures().get(0)); // same id twice
+
+        assertThatThrownBy(() -> userService.update(created.getId(), update))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Duplicate");
+    }
+
+    @Test
     void update_rejectsNullFeatures() {
         User created = userService.create(newUser("acct-nf", "card-nf"));
         User update = newUser("acct-nf", "card-nf");

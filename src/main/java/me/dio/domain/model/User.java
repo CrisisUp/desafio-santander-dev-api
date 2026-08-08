@@ -13,6 +13,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity(name = "tb_user")
 public class User {
@@ -34,14 +35,20 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable(name = "tb_user_features",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "features_id"))
+            inverseJoinColumns = @JoinColumn(name = "features_id"),
+            // Mirrors the UNIQUE(features_id) constraint from V1__create_schema.sql
+            // so a Feature/News can belong to only one user. Same names as the SQL.
+            uniqueConstraints = @UniqueConstraint(name = "uq_tb_user_features_features",
+                    columnNames = "features_id"))
     @OrderColumn(name = "features_order")
     private List<Feature> features;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable(name = "tb_user_news",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "news_id"))
+            inverseJoinColumns = @JoinColumn(name = "news_id"),
+            uniqueConstraints = @UniqueConstraint(name = "uq_tb_user_news_news",
+                    columnNames = "news_id"))
     @OrderColumn(name = "news_order")
     private List<News> news;
 

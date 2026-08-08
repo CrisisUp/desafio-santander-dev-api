@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
+import { lastValueFrom } from 'rxjs';
 import { UserFormComponent } from './user-form/user-form';
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog';
 
@@ -23,7 +24,7 @@ export class UnsavedChangesGuard implements CanDeactivate<UserFormComponent> {
         confirmLabel: 'Descartar',
       },
     });
-    return ref.afterClosed().toPromise().then((confirmed: boolean) => {
+    return lastValueFrom(ref.afterClosed()).then((confirmed: boolean) => {
       if (confirmed) {
         component.form.markAsPristine();
       }

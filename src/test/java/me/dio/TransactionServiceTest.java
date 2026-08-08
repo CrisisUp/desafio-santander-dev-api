@@ -201,6 +201,15 @@ class TransactionServiceTest {
                 .isAfterOrEqualTo(page.getContent().get(1).getCreatedAt());
     }
 
+    @Test
+    void findByAccountIdThrowsNotFoundForUnknownAccount() {
+        // Regression: GET on an unknown account used to return an empty page (200);
+        // it must now be consistent with POST and return 404.
+        assertThatThrownBy(() -> transactionService.findByAccountId(999L, PageRequest.of(0, 10)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("not found");
+    }
+
     // ---- helpers ----
 
     private Long seededAccountId() {

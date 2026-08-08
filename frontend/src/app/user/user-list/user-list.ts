@@ -201,6 +201,7 @@ export class UserListComponent implements OnInit {
       'conta corrente': 'account',
       cartões: 'cards',
       crédito: 'credit',
+      investimentos: 'others',
       seguros: 'insurance',
       'seguro casa': 'insurance',
     };
