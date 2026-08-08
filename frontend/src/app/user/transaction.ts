@@ -7,6 +7,8 @@ export interface Transaction {
   accountId: number;
   destinationAccountId?: number;
   createdAt: string;
+  /** Direction: true = credit (deposit or the incoming leg of a transfer). */
+  credit: boolean;
 }
 
 export interface TransactionPage {

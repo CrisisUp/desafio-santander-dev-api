@@ -1,5 +1,7 @@
 package me.dio.controller.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import me.dio.domain.model.User;
 import me.dio.domain.model.Card;
 import java.util.List;
@@ -10,9 +12,9 @@ import static java.util.stream.Collectors.toList;
 
 public record UserDto(
         Long id,
-        String name,
-        AccountDto account,
-        CardDto card,
+        @NotBlank String name,
+        @NotNull AccountDto account,
+        @NotNull CardDto card,
         List<FeatureDto> features,
         List<NewsDto> news) {
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -48,6 +48,7 @@ export class TransactionListComponent implements OnInit {
   saving = signal(false);
   user = signal<User | null>(null);
   showForm = signal(false);
+  accountOptions = signal<AccountOption[]>([]);
 
   accountId: number;
   pageSize = 10;
@@ -71,9 +72,12 @@ export class TransactionListComponent implements OnInit {
 
     this.form = this.fb.group({
       type: ['DEPOSIT', Validators.required],
-      amount: [null, Validators.required],
-      destinationAccountId: [null],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      // The destination is required only for TRANSFER (validated conditionally).
+      destinationAccountId: [null, this.transferDestinationValidator.bind(this)],
     });
+    // Re-run the conditional validation when the type changes.
+    this.form.get('type')?.valueChanges.subscribe(() => this.form.get('destinationAccountId')?.updateValueAndValidity());
 
     this.reload$
       .pipe(
@@ -99,6 +103,22 @@ export class TransactionListComponent implements OnInit {
   ngOnInit(): void {
     this.loadUser();
     this.loadTransactions();
+    this.loadAccountOptions();
+  }
+
+  /**
+   * Loads the accounts for the transfer dropdown (the account number is what the
+   * user sees, not the internal id).
+   *
+   * ponytail: capped at the first 100 users — fine today (seed has 41), but the
+   * dropdown goes incomplete past 100. Upgrade path: paginate until exhausted or
+   * add a dedicated GET /accounts/options endpoint.
+   */
+  private loadAccountOptions(): void {
+    this.userService.list(0, 100).subscribe({
+      next: (page) => this.accountOptions.set(buildAccountOptions(page.content, this.accountId)),
+      error: (err: Error) => this.snackBar.open(err.message, 'Fechar', { duration: 4000 }),
+    });
   }
 
   private loadUser(): void {
@@ -123,6 +143,18 @@ export class TransactionListComponent implements OnInit {
 
   toggleForm(): void {
     this.showForm.set(!this.showForm());
+  }
+
+  /**
+   * A destination is mandatory for TRANSFER and ignored otherwise. Reading the
+   * current type from the form keeps the rule in sync with the backend.
+   */
+  transferDestinationValidator(control: AbstractControl): ValidationErrors | null {
+    const type = this.form?.get('type')?.value;
+    if (type === 'TRANSFER' && (control.value == null || control.value === '')) {
+      return { required: true };
+    }
+    return null;
   }
 
   /** Builds the request payload from the form (mirrors UserFormComponent.buildPayload). */
@@ -172,12 +204,29 @@ export class TransactionListComponent implements OnInit {
     );
   }
 
-  /** Positive/negative display sign based on the type (credits add, debits subtract). */
+  /** Positive/negative display sign based on the movement direction. */
   amountClass(tx: Transaction): string {
-    return tx.type === 'DEPOSIT' ? 'balance-positive' : 'balance-negative';
+    return tx.credit ? 'balance-positive' : 'balance-negative';
   }
 
   amountValue(tx: Transaction): number {
-    return tx.type === 'DEPOSIT' ? tx.amount : -tx.amount;
+    return tx.credit ? tx.amount : -tx.amount;
   }
+}
+
+/** A selectable destination for a transfer: visible account number + holder. */
+export interface AccountOption {
+  id: number;
+  label: string;
+}
+
+/**
+ * Builds the transfer dropdown options from the user list, excluding the
+ * current account. Label shows the visible account number, not the internal id.
+ */
+export function buildAccountOptions(users: User[], currentAccountId: number): AccountOption[] {
+  return users
+    .filter((u) => u.account?.id != null && u.account.id !== currentAccountId)
+    .map((u) => ({ id: u.account.id as number, label: `${u.account.number} — ${u.name}` }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 }

@@ -103,12 +103,76 @@ class TransactionServiceTest {
         Transaction t = transactionService.create(sourceId,
                 new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("100.00"), destinationId));
 
+        // Returned leg is the DEBIT on the source.
         assertThat(t.getDestinationAccountId()).isEqualTo(destinationId);
+        assertThat(t.isCredit()).isFalse();
         assertThat(accountRepository.findById(sourceId).orElseThrow().getBalance())
                 .isEqualByComparingTo(SEED_BALANCE.subtract(new BigDecimal("100.00")));
         // newUser seeds the destination with 100.00; the transfer adds 100.00.
         assertThat(accountRepository.findById(destinationId).orElseThrow().getBalance())
                 .isEqualByComparingTo(new BigDecimal("200.00"));
+
+        // Double-entry: the destination statement has the CREDIT leg ("De conta #source").
+        var destPage = transactionService.findByAccountId(destinationId, PageRequest.of(0, 10));
+        assertThat(destPage.getContent())
+                .anyMatch(tx -> tx.getType() == TransactionType.TRANSFER && tx.isCredit()
+                        && tx.getDestinationAccountId().equals(sourceId)
+                        && tx.getAmount().compareTo(new BigDecimal("100.00")) == 0);
+        // The source statement has the DEBIT leg ("Para conta #destination").
+        var sourcePage = transactionService.findByAccountId(sourceId, PageRequest.of(0, 10));
+        assertThat(sourcePage.getContent())
+                .anyMatch(tx -> tx.getType() == TransactionType.TRANSFER && !tx.isCredit()
+                        && tx.getDestinationAccountId().equals(destinationId));
+    }
+
+    @Test
+    void transferWorksWhenSourceHasHigherId() {
+        // Regression: the ascending-id lock must still pick the real source when
+        // its id is HIGHER than the destination's (a previous bug silently debited
+        // the destination to itself, moving no money).
+        Long destinationId = seededAccountId(); // account id 1 (low)
+        User other = userService.create(newUser("transfer-high-src", "transfer-high-card"));
+        Long sourceId = other.getAccount().getId(); // higher than 1
+
+        Transaction t = transactionService.create(sourceId,
+                new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("25.00"), destinationId));
+
+        // The returned leg is owned by the SOURCE, pointing at the destination.
+        assertThat(t.getAccount().getId()).isEqualTo(sourceId);
+        assertThat(t.getDestinationAccountId()).isEqualTo(destinationId);
+        assertThat(t.isCredit()).isFalse();
+        // Money actually moved: source down 25, destination up 25.
+        assertThat(accountRepository.findById(sourceId).orElseThrow().getBalance())
+                .isEqualByComparingTo(new BigDecimal("75.00"));
+        assertThat(accountRepository.findById(destinationId).orElseThrow().getBalance())
+                .isEqualByComparingTo(SEED_BALANCE.add(new BigDecimal("25.00")));
+    }
+
+    @Test
+    void transferRequiresDestinationAccount() {
+        assertThatThrownBy(() -> transactionService.create(seededAccountId(),
+                new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("10.00"), null)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("destination");
+    }
+
+    @Test
+    void transferCountedOnceInAggregate() {
+        Long sourceId = seededAccountId();
+        User other = userService.create(newUser("transfer-aggr-acct", "transfer-aggr-card"));
+        Long destinationId = other.getAccount().getId();
+
+        transactionService.create(sourceId,
+                new TransactionRequestDto(TransactionType.TRANSFER, new BigDecimal("30.00"), destinationId));
+
+        // A transfer writes two rows but must be counted once (debit leg only).
+        var summaries = transactionService.summarizeByType();
+        assertThat(summaries).filteredOn(s -> s.type() == TransactionType.TRANSFER)
+                .singleElement()
+                .satisfies(s -> {
+                    assertThat(s.count()).isEqualTo(1L);
+                    assertThat(s.total()).isEqualByComparingTo("30.00");
+                });
     }
 
     @Test

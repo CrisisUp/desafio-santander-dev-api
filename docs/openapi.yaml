@@ -168,7 +168,7 @@ paths:
       tags:
       - Transactions Controller
       summary: Create a transaction
-      description: DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance
+      description: "DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance. A TRANSFER is double-entry: it also writes a credit leg (type TRANSFER, credit=true) on the destination account. The response is the DEBIT leg on the source."
       operationId: createTransaction
       parameters:
       - $ref: '#/components/parameters/PathId'
@@ -289,6 +289,10 @@ components:
       - description
     UserDto:
       type: object
+      required:
+      - name
+      - account
+      - card
       properties:
         id:
           type: integer
@@ -307,12 +311,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NewsDto'
-      required:
-      - name
-      - account
-      - card
-      - features
-      - news
     Page:
       type: object
       properties:
@@ -409,6 +407,9 @@ components:
         createdAt:
           type: string
           format: date-time
+        credit:
+          type: boolean
+          description: true = credit (deposit, or the incoming leg of a transfer); false = debit
     TransactionRequestDto:
       type: object
       required:
@@ -419,12 +420,12 @@ components:
           $ref: '#/components/schemas/TransactionType'
         amount:
           type: number
-          description: Must be greater than zero
+          description: Must be greater than zero, at most 2 decimal places
           exclusiveMinimum: 0
         destinationAccountId:
           type: integer
           format: int64
-          description: Required for TRANSFER; ignored otherwise
+          description: Required for TRANSFER (must be > 0); ignored otherwise
     TransactionTypeSummaryDto:
       type: object
       properties:

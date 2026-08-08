@@ -22,7 +22,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Whole-system aggregate: SUM(amount) and COUNT per transaction type.
     // Types with zero rows (e.g. TRANSFER in the seed) produce no entry — the
     // frontend zero-fills the fixed slot list.
+    // Each TRANSFER writes two rows (debit + credit legs); count it only once,
+    // via the debit leg, so the totals don't double-count a transfer.
     @Query("SELECT new me.dio.domain.repository.TransactionTypeSummary(t.type, SUM(t.amount), COUNT(t)) "
-            + "FROM tb_transaction t GROUP BY t.type")
+            + "FROM tb_transaction t WHERE (t.type <> me.dio.domain.model.TransactionType.TRANSFER OR t.credit = false) "
+            + "GROUP BY t.type")
     List<TransactionTypeSummary> summarizeByType();
 }

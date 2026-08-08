@@ -34,11 +34,22 @@ public class Transaction {
 
     // Only set on TRANSFER (nullable otherwise). Stored as a plain FK so the
     // statement can show "para conta X" without a bidirectional mapping.
+    // For the credit leg it holds the SOURCE id ("de conta X").
+    //
+    // ponytail: no DB-level FK on this column (the service validates existence
+    // at runtime). Upgrade path: map a real relation to Account once the schema
+    // allows it (a new migration, since this one is already applied).
     @Column(name = "destination_account_id")
     private Long destinationAccountId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // Direction of the movement. A TRANSFER now writes TWO rows (one per account):
+    // the debit leg (credit=false) on the source and the credit leg (credit=true)
+    // on the destination. DEPOSITs are credits; WITHDRAWAL/PAYMENT are debits.
+    @Column(nullable = false)
+    private boolean credit;
 
     public Long getId() {
         return id;
@@ -86,5 +97,13 @@ public class Transaction {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isCredit() {
+        return credit;
+    }
+
+    public void setCredit(boolean credit) {
+        this.credit = credit;
     }
 }

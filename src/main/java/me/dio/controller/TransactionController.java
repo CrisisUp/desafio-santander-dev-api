@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import me.dio.controller.dto.TransactionDto;
 import me.dio.controller.dto.TransactionRequestDto;
 import me.dio.controller.dto.TransactionTypeSummaryDto;
@@ -56,7 +57,7 @@ public record TransactionController(TransactionService transactionService) {
             @ApiResponse(responseCode = "404", description = "Account not found"),
             @ApiResponse(responseCode = "422", description = "Invalid transaction data or insufficient funds")
     })
-    public ResponseEntity<TransactionDto> create(@PathVariable Long id, @RequestBody TransactionRequestDto request) {
+    public ResponseEntity<TransactionDto> create(@PathVariable Long id, @Valid @RequestBody TransactionRequestDto request) {
         var transaction = transactionService.create(id, request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{tid}")

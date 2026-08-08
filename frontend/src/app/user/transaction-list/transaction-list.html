@@ -51,8 +51,12 @@
       </mat-form-field>
       @if (form.get('type')?.value === 'TRANSFER') {
         <mat-form-field appearance="outline">
-          <mat-label>Conta destino (ID)</mat-label>
-          <input matInput type="number" formControlName="destinationAccountId" min="1" />
+          <mat-label>Conta destino</mat-label>
+          <mat-select formControlName="destinationAccountId" placeholder="Selecione a conta destino">
+            @for (opt of accountOptions(); track opt.id) {
+              <mat-option [value]="opt.id">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
       }
       <div class="form-actions">
@@ -94,7 +98,11 @@
           <mat-header-cell *matHeaderCellDef>Detalhe</mat-header-cell>
           <mat-cell *matCellDef="let tx">
             @if (tx.type === 'TRANSFER' && tx.destinationAccountId != null) {
-              Para conta #{{ tx.destinationAccountId }}
+              @if (tx.credit) {
+                De conta #{{ tx.destinationAccountId }}
+              } @else {
+                Para conta #{{ tx.destinationAccountId }}
+              }
             } @else {
               —
             }

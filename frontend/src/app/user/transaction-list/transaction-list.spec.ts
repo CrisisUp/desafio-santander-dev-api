@@ -9,7 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { TransactionListComponent } from './transaction-list';
+import { TransactionListComponent, buildAccountOptions } from './transaction-list';
+import { User } from '../user';
 
 describe('TransactionListComponent', () => {
   beforeEach(async () => {
@@ -51,19 +52,51 @@ describe('TransactionListComponent', () => {
     expect(payload.destinationAccountId).toBe(3);
   });
 
+  it('requires destination only for TRANSFER', () => {
+    const fixture = TestBed.createComponent(TransactionListComponent);
+    const comp = fixture.componentInstance;
+    const dest = comp.form.get('destinationAccountId')!;
+
+    // Non-transfer: destination optional.
+    comp.form.patchValue({ type: 'DEPOSIT', amount: 10, destinationAccountId: null });
+    expect(dest.hasError('required')).toBe(false);
+
+    // TRANSFER without destination → invalid.
+    comp.form.patchValue({ type: 'TRANSFER', amount: 10, destinationAccountId: null });
+    expect(dest.hasError('required')).toBe(true);
+
+    // TRANSFER with destination → valid.
+    comp.form.patchValue({ type: 'TRANSFER', amount: 10, destinationAccountId: 3 });
+    expect(dest.hasError('required')).toBe(false);
+  });
+
+  it('rejects a non-positive amount', () => {
+    const fixture = TestBed.createComponent(TransactionListComponent);
+    const comp = fixture.componentInstance;
+    comp.form.patchValue({ type: 'DEPOSIT', amount: 0 });
+    expect(comp.form.get('amount')!.hasError('min')).toBe(true);
+    comp.form.patchValue({ type: 'DEPOSIT', amount: 0.01 });
+    expect(comp.form.get('amount')!.valid).toBe(true);
+  });
+
   it('amountValue signs debits negative and credits positive', () => {
     const fixture = TestBed.createComponent(TransactionListComponent);
     const comp = fixture.componentInstance;
 
+    // DEPOSIT credits.
     expect(
-      comp.amountValue({ id: 1, type: 'DEPOSIT', amount: 50, accountId: 1, createdAt: '' })
+      comp.amountValue({ id: 1, type: 'DEPOSIT', amount: 50, accountId: 1, createdAt: '', credit: true })
     ).toBe(50);
+    expect(comp.amountClass({ id: 1, type: 'DEPOSIT', amount: 50, accountId: 1, createdAt: '', credit: true }))
+      .toBe('balance-positive');
+    // Debits are negative regardless of type.
     expect(
-      comp.amountValue({ id: 2, type: 'WITHDRAWAL', amount: 20, accountId: 1, createdAt: '' })
+      comp.amountValue({ id: 2, type: 'WITHDRAWAL', amount: 20, accountId: 1, createdAt: '', credit: false })
     ).toBe(-20);
     expect(
-      comp.amountValue({ id: 3, type: 'PAYMENT', amount: 10, accountId: 1, createdAt: '' })
+      comp.amountValue({ id: 3, type: 'PAYMENT', amount: 10, accountId: 1, createdAt: '', credit: false })
     ).toBe(-10);
+    // Transfer DEBIT leg (source) is negative.
     expect(
       comp.amountValue({
         id: 4,
@@ -72,7 +105,48 @@ describe('TransactionListComponent', () => {
         accountId: 1,
         destinationAccountId: 2,
         createdAt: '',
+        credit: false,
       })
     ).toBe(-30);
+    // Transfer CREDIT leg (destination) is positive — the fix for double-entry.
+    expect(
+      comp.amountValue({
+        id: 5,
+        type: 'TRANSFER',
+        amount: 30,
+        accountId: 2,
+        destinationAccountId: 1,
+        createdAt: '',
+        credit: true,
+      })
+    ).toBe(30);
+    expect(
+      comp.amountClass({
+        id: 5,
+        type: 'TRANSFER',
+        amount: 30,
+        accountId: 2,
+        destinationAccountId: 1,
+        createdAt: '',
+        credit: true,
+      })
+    ).toBe('balance-positive');
+  });
+});
+
+describe('buildAccountOptions', () => {
+  const users = [
+    { id: 1, name: 'Ana', account: { id: 10, number: '0002', agency: '0001', balance: 0, limit: 0 }, card: { number: 'x', limit: 0 }, features: [], news: [] },
+    { id: 2, name: 'Bruno', account: { id: 20, number: '0003', agency: '0001', balance: 0, limit: 0 }, card: { number: 'y', limit: 0 }, features: [], news: [] },
+  ] as unknown as User[];
+
+  it('excludes the current account and labels by visible number', () => {
+    const options = buildAccountOptions(users, 10);
+    expect(options).toEqual([{ id: 20, label: '0003 — Bruno' }]);
+  });
+
+  it('returns empty when no other accounts exist', () => {
+    expect(buildAccountOptions(users, 10)).toHaveLength(1);
+    expect(buildAccountOptions(users, 99)).toHaveLength(2);
   });
 });

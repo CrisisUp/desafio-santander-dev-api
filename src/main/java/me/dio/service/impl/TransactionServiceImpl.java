@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static java.util.Optional.ofNullable;
@@ -53,39 +54,91 @@ public class TransactionServiceImpl implements TransactionService {
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Amount must be greater than zero.");
         }
-
-        Account source = this.accountRepository.findById(accountId)
-                .orElseThrow(NotFoundException::new);
-
-        switch (request.type()) {
-            case DEPOSIT -> source.setBalance(source.getBalance().add(request.amount()));
-            case WITHDRAWAL, PAYMENT -> {
-                this.requireFunds(source, request.amount(), request.type());
-                source.setBalance(source.getBalance().subtract(request.amount()));
-            }
-            case TRANSFER -> {
-                this.requireFunds(source, request.amount(), request.type());
-                Account destination = this.accountRepository
-                        .findById(request.destinationAccountId())
-                        .orElseThrow(NotFoundException::new);
-                if (destination.getId().equals(source.getId())) {
-                    throw new BusinessException("Source and destination accounts must differ.");
-                }
-                source.setBalance(source.getBalance().subtract(request.amount()));
-                destination.setBalance(destination.getBalance().add(request.amount()));
-            }
+        if (request.type() == TransactionType.TRANSFER && request.destinationAccountId() == null) {
+            throw new BusinessException("Transfer requires a destination account.");
         }
 
-        return this.transactionRepository.save(request.toModel(source));
+        return switch (request.type()) {
+            case DEPOSIT -> {
+                // Locked for consistency with debits (a deposit concurrent with a
+                // transfer on the same account must not see a stale balance).
+                Account source = this.lockAccount(accountId);
+                source.setBalance(source.getBalance().add(request.amount()));
+                yield this.transactionRepository.save(request.toModel(source));
+            }
+            case WITHDRAWAL, PAYMENT -> {
+                Account source = this.lockAccount(accountId);
+                this.requireFunds(source, request.amount(), request.type());
+                source.setBalance(source.getBalance().subtract(request.amount()));
+                yield this.transactionRepository.save(request.toModel(source));
+            }
+            case TRANSFER -> this.doTransfer(accountId, request);
+        };
+    }
+
+    /**
+     * A transfer debits the source and credits the destination, writing ONE
+     * transaction row per account in the same unit:
+     *   - debit leg  (credit=false, on the source): "Para conta #X"
+     *   - credit leg (credit=true,  on the destination): "De conta #X"
+     * Both accounts are locked in ascending id order (PESSIMISTIC_WRITE) so two
+     * crossed transfers cannot deadlock, and two concurrent debits on the same
+     * source cannot both pass the funds check. Returns the debit leg.
+     */
+    private Transaction doTransfer(Long accountId, TransactionRequestDto request) {
+        Long destinationId = request.destinationAccountId();
+        if (destinationId.equals(accountId)) {
+            throw new BusinessException("Source and destination accounts must differ.");
+        }
+
+        // Lock in ascending id order to avoid deadlocks on crossed transfers,
+        // then map source/destination by id comparison — never by object identity
+        // (a regression here silently debits the destination to itself).
+        Long lowId = Math.min(accountId, destinationId);
+        Long highId = Math.max(accountId, destinationId);
+        Account low = this.lockAccount(lowId);
+        Account high = this.lockAccount(highId);
+
+        Account source = low.getId().equals(accountId) ? low : high;
+        Account destination = source == low ? high : low;
+
+        this.requireFunds(source, request.amount(), TransactionType.TRANSFER);
+
+        source.setBalance(source.getBalance().subtract(request.amount()));
+        destination.setBalance(destination.getBalance().add(request.amount()));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Transaction debit = new Transaction();
+        debit.setAccount(source);
+        debit.setType(TransactionType.TRANSFER);
+        debit.setAmount(request.amount());
+        debit.setDestinationAccountId(destination.getId());
+        debit.setCreatedAt(now);
+        debit.setCredit(false);
+        this.transactionRepository.save(debit);
+
+        Transaction credit = new Transaction();
+        credit.setAccount(destination);
+        credit.setType(TransactionType.TRANSFER);
+        credit.setAmount(request.amount());
+        credit.setDestinationAccountId(source.getId());
+        credit.setCreatedAt(now);
+        credit.setCredit(true);
+        this.transactionRepository.save(credit);
+
+        return debit;
+    }
+
+    private Account lockAccount(Long id) {
+        return this.accountRepository.findByIdForUpdate(id).orElseThrow(NotFoundException::new);
     }
 
     /**
      * A debit (WITHDRAWAL / PAYMENT / TRANSFER) must not leave the balance
      * negative. Runs before any balance is mutated, so a failure aborts the
-     * whole unit with no partial change.
-     *
-     * ponytail: two concurrent debits can still race past this in-app check —
-     * the DB-level upgrade path is a CHECK (balance &gt;= 0) on tb_account.
+     * whole unit with no partial change. The calling code holds the account's
+     * pessimistic lock, so the balance read here is the latest committed one.
      */
     private void requireFunds(Account account, BigDecimal amount, TransactionType type) {
         if (account.getBalance().compareTo(amount) < 0) {
