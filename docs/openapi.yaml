@@ -187,7 +187,7 @@ paths:
       - $ref: '#/components/parameters/PathId'
       - $ref: '#/components/parameters/PageParam'
       - $ref: '#/components/parameters/SizeParam'
-      - $ref: '#/components/parameters/SortParam'
+      # Statement ordering is fixed (newest-first by created_at); sort is not supported.
       responses:
         '200':
           description: Operation successful
