@@ -45,3 +45,6 @@ __pycache__/
 # Dev H2 file database
 data/
 *.pyc
+
+# Static resources (favicons copied at build or manually placed)
+src/main/resources/static/

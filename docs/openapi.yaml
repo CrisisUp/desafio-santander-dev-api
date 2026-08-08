@@ -289,14 +289,19 @@ components:
         id:
           type: integer
           format: int64
+          example: 1
         number:
           type: string
+          example: "01.097954-4"
         agency:
           type: string
+          example: "2030"
         balance:
           type: number
+          example: 624.12
         limit:
           type: number
+          example: 1000.00
       required:
       - number
       - agency
@@ -306,10 +311,13 @@ components:
         id:
           type: integer
           format: int64
+          example: 1
         number:
           type: string
+          example: "xxxx xxxx xxxx 1111"
         limit:
           type: number
+          example: 2000.00
       required:
       - number
     FeatureDto:
@@ -318,10 +326,13 @@ components:
         id:
           type: integer
           format: int64
+          example: 1
         icon:
           type: string
+          example: "https://digitalinnovationone.github.io/santander-dev-week-2023-api/icons/pix.svg"
         description:
           type: string
+          example: "PIX"
       required:
       - description
     NewsDto:
@@ -330,10 +341,13 @@ components:
         id:
           type: integer
           format: int64
+          example: 1
         icon:
           type: string
+          example: "https://digitalinnovationone.github.io/santander-dev-week-2023-api/icons/credit.svg"
         description:
           type: string
+          example: "O Santander tem soluções de crédito sob medida pra você. Confira!"
       required:
       - description
     UniquenessCheckDto:
@@ -341,8 +355,10 @@ components:
       properties:
         accountNumberAvailable:
           type: boolean
+          example: true
         cardNumberAvailable:
           type: boolean
+          example: false
     UserDto:
       type: object
       required:
@@ -353,8 +369,10 @@ components:
         id:
           type: integer
           format: int64
+          example: 1
         name:
           type: string
+          example: "Devweekerson"
         account:
           $ref: '#/components/schemas/AccountDto'
         card:
@@ -448,24 +466,31 @@ components:
         id:
           type: integer
           format: int64
+          example: 42
         type:
           $ref: '#/components/schemas/TransactionType'
+          example: "DEPOSIT"
         amount:
           type: number
+          example: 100.50
         accountId:
           type: integer
           format: int64
+          example: 1
         destinationAccountId:
           type:
           - integer
           - 'null'
           format: int64
+          example: 2
         createdAt:
           type: string
           format: date-time
+          example: "2026-08-08T15:30:00"
         credit:
           type: boolean
           description: true = credit (deposit, or the incoming leg of a transfer); false = debit
+          example: true
     TransactionRequestDto:
       type: object
       required:
@@ -474,24 +499,30 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/TransactionType'
+          example: "TRANSFER"
         amount:
           type: number
           description: Must be greater than zero, at most 2 decimal places
           exclusiveMinimum: 0
+          example: 50.00
         destinationAccountId:
           type: integer
           format: int64
           description: Required for TRANSFER (must be > 0); ignored otherwise
+          example: 2
     TransactionTypeSummaryDto:
       type: object
       properties:
         type:
           $ref: '#/components/schemas/TransactionType'
+          example: "DEPOSIT"
         total:
           type: number
+          example: 108820.00
         count:
           type: integer
           format: int64
+          example: 41
     TransactionType:
       type: string
       enum:
