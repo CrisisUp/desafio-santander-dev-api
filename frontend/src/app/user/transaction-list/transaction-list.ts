@@ -173,17 +173,20 @@ export class TransactionListComponent implements OnInit {
 
   /**
    * Warns before submit when a debit (WITHDRAWAL/PAYMENT/TRANSFER) exceeds the
-   * account balance. DEPOSIT never fails this. The backend remains the source
-   * of truth — this is UX polish, not a safety control (the lock does that).
+   * available balance (balance + limit). DEPOSIT never fails this. The backend
+   * remains the source of truth — this is UX polish, not a safety control
+   * (the lock does that).
    */
   balanceValidator(control: AbstractControl): ValidationErrors | null {
     const type = this.form?.get('type')?.value;
     const balance = this.user()?.account?.balance;
+    const limit = this.user()?.account?.limit ?? 0;
     if (type == null || type === 'DEPOSIT' || balance == null || control.value == null) {
       return null;
     }
     const amount = Number(control.value);
-    if (Number.isFinite(amount) && amount > balance) {
+    const available = Number(balance) + Number(limit);
+    if (Number.isFinite(amount) && amount > available) {
       return { insufficientFunds: true };
     }
     return null;

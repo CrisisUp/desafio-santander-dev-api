@@ -5,6 +5,7 @@ import me.dio.domain.model.Feature;
 import me.dio.domain.model.News;
 import me.dio.domain.model.User;
 import me.dio.domain.repository.UserRepository;
+import me.dio.service.AuditService;
 import me.dio.service.UserService;
 import me.dio.service.exception.BusinessException;
 import me.dio.service.exception.NotFoundException;
@@ -22,16 +23,14 @@ import static java.util.Optional.ofNullable;
 @Service
 public class UserServiceImpl implements UserService {
 
-    /**
-     * ID de usuário utilizado na Santander Dev Week 2023.
-     * Por isso, vamos criar algumas regras para mantê-lo integro.
-     */
     private static final Long UNCHANGEABLE_USER_ID = 1L;
 
     private final UserRepository userRepository;
+    private final AuditService auditService;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, AuditService auditService) {
         this.userRepository = userRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -83,7 +82,13 @@ public class UserServiceImpl implements UserService {
             userToCreate.getNews().forEach(n -> requireNewChild(n.getId(), "News"));
         }
 
-        return this.userRepository.save(userToCreate);
+        User saved = this.userRepository.save(userToCreate);
+
+        this.auditService.log("CREATE_USER", null, "system",
+                "tb_user", saved.getId(),
+                "{\"name\":\"" + saved.getName() + "\"}");
+
+        return saved;
     }
 
     @Override
@@ -130,7 +135,13 @@ public class UserServiceImpl implements UserService {
         dbUser.setFeatures(userToUpdate.getFeatures());
         dbUser.setNews(userToUpdate.getNews());
 
-        return this.userRepository.save(dbUser);
+        User saved = this.userRepository.save(dbUser);
+
+        this.auditService.log("UPDATE_USER", null, "system",
+                "tb_user", saved.getId(),
+                "{\"name\":\"" + saved.getName() + "\"}");
+
+        return saved;
     }
 
     @Override
@@ -138,6 +149,11 @@ public class UserServiceImpl implements UserService {
     public void delete(Long id) {
         this.validateChangeableId(id, "deleted");
         User dbUser = this.findById(id);
+
+        this.auditService.log("DELETE_USER", null, "system",
+                "tb_user", dbUser.getId(),
+                "{\"name\":\"" + dbUser.getName() + "\"}");
+
         this.userRepository.delete(dbUser);
     }
 

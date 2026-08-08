@@ -57,11 +57,11 @@ class ConcurrentTransferTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    /** Source with balance 100; two transfers of 70 each — only one can fit. */
+    /** Source with balance 100, limit 0; two transfers of 70 each — only one can fit. */
     @Test
     void concurrentTransfersCannotOverdraw() throws Exception {
-        User sourceUser = userService.create(newUser("conc-source", "conc-source-card", "100.00"));
-        User destUser = userService.create(newUser("conc-dest", "conc-dest-card", "0.00"));
+        User sourceUser = userService.create(newUser("conc-source", "conc-source-card", "100.00", "0.00"));
+        User destUser = userService.create(newUser("conc-dest", "conc-dest-card", "0.00", "0.00"));
         Long sourceId = sourceUser.getAccount().getId();
         Long destinationId = destUser.getAccount().getId();
 
@@ -128,14 +128,14 @@ class ConcurrentTransferTest {
                 .forEach(u -> userService.delete(u.getId()));
     }
 
-    private User newUser(String accountNumber, String cardNumber, String balance) {
+    private User newUser(String accountNumber, String cardNumber, String balance, String limit) {
         User user = new User();
         user.setName("Concurrent User");
         Account account = new Account();
         account.setNumber(accountNumber);
         account.setAgency("0001");
         account.setBalance(new BigDecimal(balance));
-        account.setLimit(BigDecimal.valueOf(1000.00));
+        account.setLimit(new BigDecimal(limit));
         user.setAccount(account);
         Card card = new Card();
         card.setNumber(cardNumber);

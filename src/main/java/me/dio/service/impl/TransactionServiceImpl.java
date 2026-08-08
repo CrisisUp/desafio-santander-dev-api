@@ -7,6 +7,7 @@ import me.dio.domain.model.TransactionType;
 import me.dio.domain.repository.AccountRepository;
 import me.dio.domain.repository.TransactionRepository;
 import me.dio.domain.repository.TransactionTypeSummary;
+import me.dio.service.AuditService;
 import me.dio.service.TransactionService;
 import me.dio.service.exception.BusinessException;
 import me.dio.service.exception.NotFoundException;
@@ -27,10 +28,14 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
+    private final AuditService auditService;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository,
+                                  AccountRepository accountRepository,
+                                  AuditService auditService) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -81,13 +86,21 @@ public class TransactionServiceImpl implements TransactionService {
                     // transfer on the same account must not see a stale balance).
                     Account source = this.lockAccount(accountId);
                     source.setBalance(source.getBalance().add(request.amount()));
-                    yield this.saveWithKey(request.toModel(source), idempotencyKey);
+                    Transaction saved = this.saveWithKey(request.toModel(source), idempotencyKey);
+                    this.auditService.log("CREATE_TRANSACTION", null, "system",
+                            "tb_transaction", saved.getId(),
+                            "{\"type\":\"DEPOSIT\",\"amount\":" + request.amount() + ",\"accountId\":" + accountId + "}");
+                    yield saved;
                 }
                 case WITHDRAWAL, PAYMENT -> {
                     Account source = this.lockAccount(accountId);
                     this.requireFunds(source, request.amount(), request.type());
                     source.setBalance(source.getBalance().subtract(request.amount()));
-                    yield this.saveWithKey(request.toModel(source), idempotencyKey);
+                    Transaction saved = this.saveWithKey(request.toModel(source), idempotencyKey);
+                    this.auditService.log("CREATE_TRANSACTION", null, "system",
+                            "tb_transaction", saved.getId(),
+                            "{\"type\":\"" + request.type() + "\",\"amount\":" + request.amount() + ",\"accountId\":" + accountId + "}");
+                    yield saved;
                 }
                 case TRANSFER -> this.doTransfer(accountId, request, idempotencyKey);
             };
@@ -159,6 +172,15 @@ public class TransactionServiceImpl implements TransactionService {
         credit.setIdempotencyKey(idempotencyKey);
         this.transactionRepository.save(credit);
 
+        // Audit the transfer (both legs in one entry)
+        this.auditService.log("TRANSFER", null, "system",
+                "tb_transaction", debit.getId(),
+                "{\"sourceAccountId\":" + source.getId() +
+                ",\"destinationAccountId\":" + destination.getId() +
+                ",\"amount\":" + request.amount() +
+                ",\"debitTransactionId\":" + debit.getId() +
+                ",\"creditTransactionId\":" + credit.getId() + "}");
+
         return debit;
     }
 
@@ -167,19 +189,15 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     * A debit (WITHDRAWAL / PAYMENT / TRANSFER) must not leave the balance
-     * negative. Runs before any balance is mutated, so a failure aborts the
-     * whole unit with no partial change. The calling code holds the account's
-     * pessimistic lock, so the balance read here is the latest committed one.
-     *
-     * ponytail: only the balance counts — Account.limit (additional_limit) is
-     * decorative and never permits an overdraft. If a "cheque especial" rule is
-     * wanted later, the limit must be added here AND mirrored in the frontend's
-     * balanceValidator (frontend/src/app/user/transaction-list/transaction-list.ts),
-     * keeping both layers in sync.
+     * A debit (WITHDRAWAL / PAYMENT / TRANSFER) must not leave the available
+     * balance (balance + additional_limit) negative. Runs before any balance is
+     * mutated, so a failure aborts the whole unit with no partial change. The
+     * calling code holds the account's pessimistic lock, so the balance read
+     * here is the latest committed one.
      */
     private void requireFunds(Account account, BigDecimal amount, TransactionType type) {
-        if (account.getBalance().compareTo(amount) < 0) {
+        BigDecimal available = account.getBalance().add(account.getLimit() != null ? account.getLimit() : BigDecimal.ZERO);
+        if (available.compareTo(amount) < 0) {
             throw new BusinessException("Insufficient funds for %s.".formatted(type));
         }
     }
