@@ -5,6 +5,10 @@ spring:
     password: ${PGPASSWORD}
   jpa:
     hibernate:
+      # "validate" confere colunas/tipos do mapeamento JPA, mas NÃO valida FKs
+      # que não são associações mapeadas (ex.: fk_tb_transaction_destination,
+      # aplicada por V9 sobre o campo Long destination_account_id). O schema vem
+      # do Flyway — as migrações são a fonte de verdade.
       ddl-auto: validate
 
 cors:

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -35,7 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * No @Transactional here: each thread commits a real transaction, so the lock
  * actually engages. @AfterEach deletes the users created by each test.
  */
+// Isolated in-memory H2: the commits stay real (the pessimistic lock needs a
+// committed DB), but no longer pollute the persistent dev database.
 @SpringBootTest
+@ActiveProfiles("test")
 class ConcurrentTransferTest {
 
     @Autowired

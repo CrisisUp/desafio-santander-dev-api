@@ -30,7 +30,9 @@ def transform_user(user):
     balance = user['account']['balance']
     # Sua lógica de "IA" personalizada
     message = f"Olá {name}, seu saldo de R$ {balance} é excelente!"
-    user['news'].append({"description": message})
+    # icon must match a registered brand SVG (see frontend BrandIconService);
+    # a missing icon renders as a broken image on the statement detail panel.
+    user['news'].append({"description": message, "icon": "https://digitalinnovationone.github.io/santander-dev-week-2023-api/icons/credit.svg"})
     return user
 
 def load_to_file(user):

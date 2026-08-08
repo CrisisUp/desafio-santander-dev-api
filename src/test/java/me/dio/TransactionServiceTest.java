@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -29,7 +30,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Regression tests for the transaction/statement business rules.
  * Each test runs in a transaction that is rolled back, keeping the Flyway seed intact.
  */
+// Test profile = isolated in-memory H2: the persistent dev DB (data/sdw2023.mv.db)
+// accumulates real data over time, which breaks the seed-total assertions.
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class TransactionServiceTest {
 

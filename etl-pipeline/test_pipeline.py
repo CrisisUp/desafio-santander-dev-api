@@ -14,7 +14,10 @@ def test_transform_user_appends_personalized_message():
     }
     transformed = main.transform_user(user)
     assert transformed["news"] == [
-        {"description": "Olá Devweekerson, seu saldo de R$ 624.12 é excelente!"}
+        {
+            "description": "Olá Devweekerson, seu saldo de R$ 624.12 é excelente!",
+            "icon": "https://digitalinnovationone.github.io/santander-dev-week-2023-api/icons/credit.svg",
+        }
     ]
 
 

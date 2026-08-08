@@ -36,9 +36,10 @@ public class Transaction {
     // statement can show "para conta X" without a bidirectional mapping.
     // For the credit leg it holds the SOURCE id ("de conta X").
     //
-    // ponytail: no DB-level FK on this column (the service validates existence
-    // at runtime). Upgrade path: map a real relation to Account once the schema
-    // allows it (a new migration, since this one is already applied).
+    // Referential integrity is enforced at the DB level by
+    // V9__add_transaction_destination_fk.sql (fk_tb_transaction_destination).
+    // The field stays a plain Long — no @ManyToOne — so ddl-auto: validate does
+    // not check this FK; the migration is the single source of truth for it.
     @Column(name = "destination_account_id")
     private Long destinationAccountId;
 

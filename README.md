@@ -22,7 +22,7 @@ Diferente da versão original, este repositório foca na automação de dados e 
 
 * **OpenAPI (Swagger):** Documentação interativa disponível em <http://localhost:8080/swagger-ui/index.html>. A spec canônica da API está em [docs/openapi.yaml](docs/openapi.yaml), exportada do `/v3/api-docs`.
 
-* **H2 Database:** Banco de dados em memória para desenvolvimento ágil.
+* **H2 Database:** Banco de dados em arquivo no perfil `dev` (persiste entre reinícios em `./data/sdw2023`) e em memória nos testes.
 
 ## 📊 Domínio da API (Diagrama de Classes)
 
@@ -76,7 +76,7 @@ Testes do frontend: `npm run test:ci` (vitest, modo CI sem watch).
 
 ### 1. Backend (Java)
 
-Certifique-se de estar usando o `JDK 21`. O perfil `dev` (H2 em memória) é o padrão — o seed do usuário histórico é aplicado automaticamente pelo Flyway:
+Certifique-se de estar usando o `JDK 21`. O perfil `dev` (H2 em arquivo, `./data/sdw2023`) é o padrão — o seed do usuário histórico é aplicado automaticamente pelo Flyway:
 
 ```Bash
 ./gradlew clean bootRun

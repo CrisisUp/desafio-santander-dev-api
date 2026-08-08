@@ -208,10 +208,10 @@ paths:
       - name: Idempotency-Key
         in: header
         required: false
-        description: UUID per intent; retries with the same key are deduplicated (per account)
+        description: Opaque client-supplied key per intent (the frontend sends a UUID). Retries with the same key are deduplicated (per account). Max 64 characters.
         schema:
           type: string
-          format: uuid
+          maxLength: 64
       requestBody:
         content:
           application/json:
