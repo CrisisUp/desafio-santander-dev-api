@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +19,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * and the @Valid bean validation on POST /users. The service layer is covered
  * by UserServiceTest; this covers the HTTP binding (params, 422, 201).
  */
+// Isolated in-memory H2: a running API locks the persistent dev DB.
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional // roll back created users so the shared H2 seed stays intact
 class UserControllerTest {
 

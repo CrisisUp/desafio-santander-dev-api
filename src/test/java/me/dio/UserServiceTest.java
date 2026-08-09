@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -26,7 +27,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Regression tests for the create/update/delete business rules.
  * Each test runs in a transaction that is rolled back, keeping the Flyway seed intact.
  */
+// Isolated in-memory H2: the persistent dev DB (data/sdw2023.mv.db) is locked
+// by a running API, so tests must not open it (else "Database already in use").
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class UserServiceTest {
 
