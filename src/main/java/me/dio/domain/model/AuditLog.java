@@ -36,7 +36,9 @@ public class AuditLog {
     @Column(name = "target_id")
     private Long targetId;
 
-    @Column(name = "details", columnDefinition = "clob")
+    // TEXT works on H2 and PostgreSQL (V12 used CLOB, which Postgres rejects;
+    // V15 normalizes to TEXT).
+    @Column(name = "details", columnDefinition = "text")
     private String details;
 
     @Column(name = "created_at", nullable = false, updatable = false)
