@@ -13,6 +13,10 @@ import java.util.Date;
 /**
  * JWT generation/validation. HS256 with a configurable secret
  * (auth.jwt-secret), defaulted for dev; override in production.
+ *
+ * The access token is short-lived (auth.access-token-ms, default 15min); the
+ * refresh token is a separate opaque string handled by AuthService, so a
+ * leaked access token has a small window of validity.
  */
 @Service
 public class JwtService {
@@ -21,7 +25,7 @@ public class JwtService {
     private final long expirationMillis;
 
     public JwtService(@Value("${auth.jwt-secret}") String secret,
-                      @Value("${auth.jwt-expiration-ms:86400000}") long expirationMillis) {
+                      @Value("${auth.access-token-ms:900000}") long expirationMillis) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMillis = expirationMillis;
     }

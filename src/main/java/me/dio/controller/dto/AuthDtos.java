@@ -18,8 +18,15 @@ public final class AuthDtos {
             @NotBlank @Size(min = 3, max = 50) String username,
             @NotBlank @Size(min = 6, max = 100) String password) {}
 
+    public record RefreshRequest(
+            @NotBlank String refreshToken) {}
+
+    public record LogoutRequest(
+            @NotBlank String refreshToken) {}
+
     public record AuthResponse(
             String token,
+            String refreshToken,
             String username,
             String role,
             Long userId) {}

@@ -23,4 +23,7 @@ rate-limit:
 # in production (AUTH_JWT_SECRET env var) with a long random value.
 auth:
   jwt-secret: ${AUTH_JWT_SECRET:dev-only-secret-key-please-change-in-production-0123456789abcdef}
-  jwt-expiration-ms: 86400000
+  # Access token lifetime: short-lived by design; the client refreshes via the
+  # opaque refresh token (auth.refresh-token-ms).
+  access-token-ms: ${AUTH_ACCESS_TOKEN_MS:900000}
+  refresh-token-ms: ${AUTH_REFRESH_TOKEN_MS:604800000}

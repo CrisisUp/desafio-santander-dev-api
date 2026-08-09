@@ -9,7 +9,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpStatus;
 
 /**
  * Stateless JWT security. Public endpoints (auth + docs) are open; everything
@@ -44,6 +46,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/accounts/transactions/summary").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .headers(headers -> headers.frameOptions(fo -> fo.sameOrigin()))
+            // Unauthenticated requests (missing/expired/invalid token) get 401,
+            // so the frontend knows to refresh; 403 is reserved for
+            // authenticated-but-forbidden (role/ownership) cases.
+            .exceptionHandling(eh -> eh.authenticationEntryPoint(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

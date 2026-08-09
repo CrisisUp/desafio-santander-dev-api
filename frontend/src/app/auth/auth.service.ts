@@ -5,6 +5,7 @@ import { catchError, tap } from 'rxjs/operators';
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   username: string;
   role: string;
   userId: number | null;
@@ -28,6 +29,10 @@ export class AuthService {
     return this.auth()?.token ?? null;
   }
 
+  get refreshToken(): string | null {
+    return this.auth()?.refreshToken ?? null;
+  }
+
   get isAuthenticated(): boolean {
     return this.auth() !== null;
   }
@@ -46,7 +51,35 @@ export class AuthService {
     );
   }
 
-  logout(): void {
+  /** Rotates the refresh token and stores the new token pair. */
+  refresh(): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>('/auth/refresh', { refreshToken: this.refreshToken })
+      .pipe(
+        tap((res) => this.save(res)),
+        catchError(this.handleError)
+      );
+  }
+
+  /** Revokes the refresh token on the server, then clears local state. */
+  logout(): Observable<void> {
+    const rt = this.refreshToken;
+    // Revoke on the server when we have a token; always clear local state.
+    const revoke$ = rt
+      ? this.http.post<void>('/auth/logout', { refreshToken: rt })
+      : new Observable<void>((s) => { s.next(); s.complete(); });
+    return revoke$.pipe(
+      tap(() => this.clear()),
+      catchError((err) => {
+        // Even if revocation fails, end the session locally.
+        this.clear();
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Clears local state without a server call (e.g. after a failed refresh). */
+  clear(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.auth.set(null);
   }

@@ -15,7 +15,7 @@
  * /dashboard, ...) never match the regex -> served as index.html.
  */
 export default {
-  '^/auth/(login|register)$': {
+  '^/auth/(login|register|refresh|logout)$': {
     target: 'http://localhost:8080',
     changeOrigin: true,
     secure: false,

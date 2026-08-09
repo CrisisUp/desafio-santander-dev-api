@@ -54,3 +54,19 @@ test('logout returns to login', async ({ page }) => {
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test('expired access token is transparently refreshed', async ({ page }) => {
+  await login(page);
+  // Corrupt the stored access token (simulate expiry) but keep the refresh token.
+  await page.evaluate(() => {
+    const raw = localStorage.getItem('sdw_jwt');
+    if (raw) {
+      const data = JSON.parse(raw);
+      data.token = 'expired.invalid.token';
+      localStorage.setItem('sdw_jwt', JSON.stringify(data));
+    }
+  });
+  // Navigate to the dashboard: the 401 triggers a refresh and retries.
+  await page.goto('/dashboard');
+  await expect(page.getByText('Saldo total')).toBeVisible({ timeout: 15_000 });
+});

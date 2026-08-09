@@ -76,6 +76,44 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '422':
           $ref: '#/components/responses/PlainError'
+  /auth/refresh:
+    post:
+      tags:
+      - Auth Controller
+      summary: Rotate a refresh token and receive a new token pair
+      operationId: refresh
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      responses:
+        '200':
+          description: New access + refresh token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/PlainError'
+  /auth/logout:
+    post:
+      tags:
+      - Auth Controller
+      summary: Revoke a refresh token (ends the session)
+      operationId: logout
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      responses:
+        '204':
+          description: Session revoked
   /audit:
     get:
       tags:
@@ -418,11 +456,29 @@ components:
           type: string
           minLength: 6
           maxLength: 100
+    RefreshRequest:
+      type: object
+      required:
+      - refreshToken
+      properties:
+        refreshToken:
+          type: string
+    LogoutRequest:
+      type: object
+      required:
+      - refreshToken
+      properties:
+        refreshToken:
+          type: string
     AuthResponse:
       type: object
       properties:
         token:
           type: string
+          description: Short-lived access JWT
+        refreshToken:
+          type: string
+          description: Opaque rotating refresh token (send to /auth/refresh)
         username:
           type: string
         role:
