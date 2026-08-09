@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import jakarta.validation.ConstraintViolationException;
 
 import me.dio.service.exception.BusinessException;
+import me.dio.service.exception.ForbiddenException;
 import me.dio.service.exception.NotFoundException;
 
 @RestControllerAdvice
@@ -28,6 +29,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    // Ownership/authorization failure: the user exists but lacks access.
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<String> handleForbiddenException(ForbiddenException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     // Bean-validation failures on @Valid @RequestBody (missing/negative amount,

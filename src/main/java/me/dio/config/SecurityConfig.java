@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/users/check").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/audit/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/accounts/transactions/summary").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .headers(headers -> headers.frameOptions(fo -> fo.sameOrigin()))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

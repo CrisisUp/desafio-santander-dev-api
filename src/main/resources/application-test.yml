@@ -7,3 +7,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+# Rate limit off in tests: MockMvc suites make many POSTs from one IP.
+rate-limit:
+  enabled: false

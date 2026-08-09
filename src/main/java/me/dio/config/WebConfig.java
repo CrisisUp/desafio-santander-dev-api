@@ -16,14 +16,17 @@ public class WebConfig implements WebMvcConfigurer {
     private final String allowedOrigins;
     private final int rateLimitMax;
     private final long rateLimitWindowSeconds;
+    private final boolean rateLimitEnabled;
 
     public WebConfig(
             @Value("${cors.allowed-origins:http://localhost:4200}") String allowedOrigins,
             @Value("${rate-limit.max-requests:20}") int rateLimitMax,
-            @Value("${rate-limit.window-seconds:60}") long rateLimitWindowSeconds) {
+            @Value("${rate-limit.window-seconds:60}") long rateLimitWindowSeconds,
+            @Value("${rate-limit.enabled:true}") boolean rateLimitEnabled) {
         this.allowedOrigins = allowedOrigins;
         this.rateLimitMax = rateLimitMax;
         this.rateLimitWindowSeconds = rateLimitWindowSeconds;
+        this.rateLimitEnabled = rateLimitEnabled;
     }
 
     @Override
@@ -35,6 +38,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new RateLimitInterceptor(rateLimitMax, rateLimitWindowSeconds));
+        // Disabled on the test profile (rate-limit.enabled=false) so MockMvc
+        // suites are not throttled.
+        if (rateLimitEnabled) {
+            registry.addInterceptor(new RateLimitInterceptor(rateLimitMax, rateLimitWindowSeconds));
+        }
     }
 }

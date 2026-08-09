@@ -200,7 +200,7 @@ paths:
       tags:
       - Users Controller
       summary: Get a user by ID
-      description: Retrieve a specific user based on its ID
+      description: Retrieve a specific user based on its ID. USER role may only read their own user; ADMIN may read any.
       operationId: findById
       parameters:
       - $ref: '#/components/parameters/PathId'
@@ -211,13 +211,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
+        '403':
+          $ref: '#/components/responses/PlainError'
         '404':
           $ref: '#/components/responses/PlainError'
     put:
       tags:
       - Users Controller
       summary: Update a user
-      description: Update the data of an existing user based on its ID
+      description: Update the data of an existing user based on its ID. USER role may only update their own user; ADMIN may update any.
       operationId: updateUser
       parameters:
       - $ref: '#/components/parameters/PathId'
@@ -234,6 +236,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
+        '403':
+          $ref: '#/components/responses/PlainError'
         '404':
           $ref: '#/components/responses/PlainError'
         '422':
@@ -242,13 +246,15 @@ paths:
       tags:
       - Users Controller
       summary: Delete a user
-      description: Delete an existing user based on its ID
+      description: Delete an existing user based on its ID (ADMIN only)
       operationId: deleteUser
       parameters:
       - $ref: '#/components/parameters/PathId'
       responses:
         '204':
           description: User deleted successfully
+        '403':
+          $ref: '#/components/responses/PlainError'
         '404':
           $ref: '#/components/responses/PlainError'
   /accounts/transactions/summary:
@@ -256,7 +262,7 @@ paths:
       tags:
       - Transactions Controller
       summary: Transaction totals by type
-      description: Aggregate SUM(amount) and COUNT per transaction type across all accounts. Types with no rows are omitted (the frontend zero-fills them).
+      description: Aggregate SUM(amount) and COUNT per transaction type across all accounts. Types with no rows are omitted (the frontend zero-fills them). ADMIN only.
       operationId: summarizeByType
       # The summary endpoint returns 200; errors are handled by GlobalExceptionHandler as a 500.
       responses:
@@ -268,12 +274,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TransactionTypeSummaryDto'
+        '403':
+          $ref: '#/components/responses/PlainError'
   /accounts/{id}/transactions:
     get:
       tags:
       - Transactions Controller
       summary: List transactions
-      description: Retrieve a paged statement for an account (newest first)
+      description: Retrieve a paged statement for an account (newest first). USER role may only read their own account.
       operationId: findByAccountId
       parameters:
       - $ref: '#/components/parameters/PathId'
@@ -287,13 +295,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageTransactionDto'
+        '403':
+          $ref: '#/components/responses/PlainError'
         '404':
           $ref: '#/components/responses/PlainError'
     post:
       tags:
       - Transactions Controller
       summary: Create a transaction
-      description: "DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance. A TRANSFER is double-entry: it also writes a credit leg (type TRANSFER, credit=true) on the destination account. The response is the DEBIT leg on the source. Idempotent: send an Idempotency-Key header per intent; a retry with the same key returns the original transaction instead of debiting twice."
+      description: "DEPOSIT adds, WITHDRAWAL/PAYMENT/TRANSFER subtract from the balance. A TRANSFER is double-entry: it also writes a credit leg (type TRANSFER, credit=true) on the destination account. The response is the DEBIT leg on the source. Idempotent: send an Idempotency-Key header per intent; a retry with the same key returns the original transaction instead of debiting twice. USER role may only operate on their own account."
       operationId: createTransaction
       parameters:
       - $ref: '#/components/parameters/PathId'
@@ -317,6 +327,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionDto'
+        '403':
+          $ref: '#/components/responses/PlainError'
         '404':
           $ref: '#/components/responses/PlainError'
         '422':

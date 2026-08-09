@@ -43,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        new AuthenticatedUser(username, userId), null, authorities);
+                        new AuthenticatedUser(username, userId, role), null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
                 // Invalid/expired token: leave the context unauthenticated.

@@ -18,4 +18,22 @@ public final class SecurityUtils {
         }
         return null;
     }
+
+    /** True when the current actor is an ADMIN. */
+    public static boolean isAdmin() {
+        AuthenticatedUser user = currentUser();
+        return user != null && user.isAdmin();
+    }
+
+    /**
+     * True when the current actor owns the given banking user id (i.e. their
+     * token's userId matches), or is an ADMIN.
+     */
+    public static boolean isOwnerOrAdmin(Long domainUserId) {
+        if (isAdmin()) {
+            return true;
+        }
+        AuthenticatedUser user = currentUser();
+        return user != null && user.userId() != null && user.userId().equals(domainUserId);
+    }
 }

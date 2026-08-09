@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import me.dio.config.SecurityUtils;
 import me.dio.controller.dto.UniquenessCheckDto;
 import me.dio.controller.dto.UserDto;
 import me.dio.service.UserService;
+import me.dio.service.exception.ForbiddenException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -56,12 +58,14 @@ public record UserController(UserService userService) {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get a user by ID", description = "Retrieve a specific user based on its ID")
-    @ApiResponses(value = { 
+    @Operation(summary = "Get a user by ID", description = "Retrieve a specific user based on its ID. USER role may only read their own user; ADMIN may read any.")
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operation successful"),
+            @ApiResponse(responseCode = "403", description = "Forbidden: not the owner and not ADMIN"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<UserDto> findById(@PathVariable Long id) {
+        requireOwnerOrAdmin(id);
         var user = userService.findById(id);
         return ResponseEntity.ok(new UserDto(user));
     }
@@ -82,25 +86,35 @@ public record UserController(UserService userService) {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a user", description = "Update the data of an existing user based on its ID")
-    @ApiResponses(value = { 
+    @Operation(summary = "Update a user", description = "Update the data of an existing user based on its ID. USER role may only update their own user; ADMIN may update any.")
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden: not the owner and not ADMIN"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "422", description = "Invalid user data provided")
     })
     public ResponseEntity<UserDto> update(@PathVariable Long id, @Valid @RequestBody UserDto userDto) {
+        requireOwnerOrAdmin(id);
         var user = userService.update(id, userDto.toModel());
         return ResponseEntity.ok(new UserDto(user));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a user", description = "Delete an existing user based on its ID")
-    @ApiResponses(value = { 
+    @Operation(summary = "Delete a user", description = "Delete an existing user based on its ID (ADMIN only)")
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden: requires ADMIN"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** A USER may only access their own user; ADMIN may access any. */
+    private void requireOwnerOrAdmin(Long id) {
+        if (!SecurityUtils.isOwnerOrAdmin(id)) {
+            throw new ForbiddenException();
+        }
     }
 }
