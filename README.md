@@ -16,13 +16,21 @@ Diferente da versão original, este repositório foca na automação de dados e 
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Java 21 & Spring Boot 3:** Backend robusto com Spring Data JPA.
+* **Java 21 & Spring Boot 3:** Backend robusto com Spring Data JPA, Spring Security (JWT) e Spring Data Redis.
+
+* **Spring Security + JWT:** Autenticação com access token de curta duração + **refresh token rotativo** (opaco, hasheado no banco), ownership por role (USER vs ADMIN) e logout com revogação server-side.
+
+* **Redis:** Rate limit distribuído por IP (contador compartilhado entre instâncias via Lua atômico), com fallback in-memory quando o Redis está indisponível.
 
 * **Python 3.11:** Engine do pipeline ETL utilizando a biblioteca requests.
 
 * **OpenAPI (Swagger):** Documentação interativa disponível em <http://localhost:8080/swagger-ui/index.html>. A spec canônica da API está em [docs/openapi.yaml](docs/openapi.yaml), exportada do `/v3/api-docs`.
 
 * **H2 Database:** Banco de dados em arquivo no perfil `dev` (persiste entre reinícios em `./data/sdw2023`) e em memória nos testes.
+
+* **PostgreSQL:** Banco de produção-like no `docker-compose.prd.yml`.
+
+* **Testes:** 77 testes backend (JUnit), 26 unit do frontend (vitest), 7 E2E (Playwright) e 10 do ETL (pytest). CI no GitHub Actions com integração PostgreSQL e E2E.
 
 ## 📊 Domínio da API (Diagrama de Classes)
 
@@ -52,10 +60,29 @@ Diferente da versão original, este repositório foca na automação de dados e 
     -String icon
     -String description
   }
+  class AuthUser {
+    -String username
+    -String password (bcrypt)
+    -String role
+  }
+  class RefreshToken {
+    -String tokenHash (SHA-256)
+    -DateTime expiresAt
+    -boolean revoked
+  }
+  class AuditLog {
+    -String action
+    -Long actorUserId
+    -String targetEntity
+    -Long targetId
+    -String details
+  }
   User "1" *-- "1" Account
   User "1" *-- "N" Feature
   User "1" *-- "1" Card
   User "1" *-- "N" News
+  AuthUser "1" o-- "0..1" User
+  AuthUser "1" *-- "N" RefreshToken
 ```
 
 ## 🖥️ Frontend (Angular)
@@ -71,6 +98,20 @@ npm start          # http://localhost:4200  (requer a API rodando na 8080)
 ```
 
 Testes do frontend: `npm run test:ci` (vitest, modo CI sem watch).
+Testes E2E: `npm run e2e` (Playwright — requer API em `:8080` e `npm start` rodando).
+
+## 🔐 Credenciais de Acesso (seeds)
+
+A API exige autenticação (JWT). Dois usuários são seedados pelo Flyway:
+
+| Usuário | Senha | Role | Vinculado a |
+|---------|-------|------|-------------|
+| `devweekerson` | `admin123` | ADMIN | Usuário bancário 1 (Devweekerson) |
+| `ana` | `senha123` | USER | Usuário bancário 2 (Ana Souza) |
+
+- **ADMIN** pode ler/editar qualquer usuário/conta e acessar `/audit`.
+- **USER** só acessa a própria conta e o próprio usuário (403 caso contrário).
+- O access token expira em 15min; o frontend renova automaticamente via refresh token.
 
 ## 📖 Como Executar o Projeto
 
@@ -84,13 +125,13 @@ Certifique-se de estar usando o `JDK 21`. O perfil `dev` (H2 em arquivo, `./data
 
 ### 2. Pipeline ETL (Python)
 
-Navegue até a pasta etl-pipeline, ative o ambiente virtual e execute o processamento:
+O ETL agora autentica contra a API (o `entrypoint.sh` faz login uma vez e compartilha o token). Rodando direto:
 
 ```Bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python populate_api.py
+python populate_api.py     # requer API em :8080 + credenciais (ETL_USERNAME/ETL_PASSWORD, default admin)
 python main.py
 ```
 
@@ -114,11 +155,11 @@ docker compose up --build
 ```
 
 Depois de subir:
-- **Frontend**: <http://localhost:4200>
-- **API (Swagger)**: <http://localhost:8080/swagger-ui/index.html>
+- **Frontend**: <http://localhost:4200> — faça login com `devweekerson`/`admin123`
+- **API (Swagger)**: <http://localhost:8080/swagger-ui/index.html> — use "Authorize" com o token do `/auth/login`
 - O pipeline irá aguardar a API ficar saudável, popular os dados e executar o ETL automaticamente.
 
-Para produção-like com PostgreSQL (em vez de H2):
+Para produção-like com **PostgreSQL + Redis** (em vez de H2) — inclui rate limit distribuído:
 
 ```Bash
 docker compose -f docker-compose.yml -f docker-compose.prd.yml up --build
