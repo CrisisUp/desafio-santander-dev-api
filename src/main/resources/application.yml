@@ -13,11 +13,13 @@ spring:
 cors:
   allowed-origins: http://localhost:4200
 
-# Per-IP sliding-window rate limit for write requests (POST).
-# High enough for normal dev use; raise/lower per profile if needed.
+# Per-IP rate limit for write requests (POST). Backed by Redis in production
+# (shared budget across instances); falls back to an in-memory budget when Redis
+# is unavailable. The dev/test profiles leave redis-enabled=false.
 rate-limit:
   max-requests: 20
   window-seconds: 60
+  redis-enabled: ${RATE_LIMIT_REDIS_ENABLED:false}
 
 # JWT authentication. The dev secret is fine for local use; MUST be overridden
 # in production (AUTH_JWT_SECRET env var) with a long random value.

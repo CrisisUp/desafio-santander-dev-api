@@ -1,6 +1,7 @@
 package me.dio;
 
 import me.dio.config.RateLimitInterceptor;
+import me.dio.config.RedisRateLimiter;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -8,14 +9,16 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for the per-IP sliding-window write limiter. Tested directly
- * (no Spring context) so a limit breach here can't leak into other tests that
- * POST from the same mock IP.
+ * Unit tests for the per-IP write limiter. Uses the RedisRateLimiter with a
+ * null Redis template, which degrades to the in-memory fallback — so no Redis
+ * is needed and the interceptor behavior (429, per-IP, GET unlimited) is
+ * exercised directly (no Spring context).
  */
 class RateLimitInterceptorTest {
 
     /** 3 POSTs allowed per 60s window. */
-    private final RateLimitInterceptor interceptor = new RateLimitInterceptor(3, 60);
+    private final RateLimitInterceptor interceptor =
+            new RateLimitInterceptor(new RedisRateLimiter(null, 3, 60, false));
     private final MockHttpServletResponse response = new MockHttpServletResponse();
 
     private MockHttpServletRequest post(String ip) {

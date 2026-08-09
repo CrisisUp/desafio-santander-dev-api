@@ -8,25 +8,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Global web configuration: CORS (allowed origin configurable) and the write
- * rate limiter (see rate-limit.* in application.yml).
+ * rate limiter (see rate-limit.* in application.yml). The limiter is backed by
+ * Redis (shared across instances) with an in-memory fallback.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     private final String allowedOrigins;
-    private final int rateLimitMax;
-    private final long rateLimitWindowSeconds;
     private final boolean rateLimitEnabled;
+    private final RedisRateLimiter rateLimiter;
 
     public WebConfig(
             @Value("${cors.allowed-origins:http://localhost:4200}") String allowedOrigins,
-            @Value("${rate-limit.max-requests:20}") int rateLimitMax,
-            @Value("${rate-limit.window-seconds:60}") long rateLimitWindowSeconds,
-            @Value("${rate-limit.enabled:true}") boolean rateLimitEnabled) {
+            @Value("${rate-limit.enabled:true}") boolean rateLimitEnabled,
+            RedisRateLimiter rateLimiter) {
         this.allowedOrigins = allowedOrigins;
-        this.rateLimitMax = rateLimitMax;
-        this.rateLimitWindowSeconds = rateLimitWindowSeconds;
         this.rateLimitEnabled = rateLimitEnabled;
+        this.rateLimiter = rateLimiter;
     }
 
     @Override
@@ -41,7 +39,7 @@ public class WebConfig implements WebMvcConfigurer {
         // Disabled on the test profile (rate-limit.enabled=false) so MockMvc
         // suites are not throttled.
         if (rateLimitEnabled) {
-            registry.addInterceptor(new RateLimitInterceptor(rateLimitMax, rateLimitWindowSeconds));
+            registry.addInterceptor(new RateLimitInterceptor(rateLimiter));
         }
     }
 }

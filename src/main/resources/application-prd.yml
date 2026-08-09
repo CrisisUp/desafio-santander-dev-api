@@ -10,6 +10,14 @@ spring:
       # aplicada por V9 sobre o campo Long destination_account_id). O schema vem
       # do Flyway — as migrações são a fonte de verdade.
       ddl-auto: validate
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+# Distributed rate limit: Redis-backed in production (shared across instances).
+rate-limit:
+  redis-enabled: true
 
 cors:
   # Define o domínio do seu frontend em produção (ex.: https://app.santander.com.br)

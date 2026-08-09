@@ -1,22 +1,33 @@
 # ADR 005: Rate Limiting
 
 ## Status
-Accepted (with known limitation)
+Accepted (evolved: distributed via Redis)
 
 ## Context
-Write endpoints (POST) must be protected against abuse.
+Write endpoints (POST) must be protected against abuse, including across
+multiple API instances.
 
 ## Decision
-- In-memory sliding-window interceptor (`RateLimitInterceptor`): max 20 POSTs per 60s per IP.
-- Configured via `rate-limit.max-requests` and `rate-limit.window-seconds` (default 20/60).
+- **Distributed limiter** (`RedisRateLimiter`) backed by Redis: fixed-window,
+  atomic INCR+EXPIRE via a Lua script. The counter lives in Redis, so all
+  instances share a single budget.
+- Default `max-requests: 20` per `window-seconds: 60` per IP.
 - Applied only to POST; GET unlimited.
 - `X-Forwarded-For` respected for proxy deployments.
+- **Fallback**: when Redis is unreachable (`redis-enabled=false` in dev/test,
+  or a Redis outage in prod), the limiter degrades to a per-instance in-memory
+  budget (fail-open) rather than rejecting requests.
+- Enabled via `rate-limit.redis-enabled` (prod sets `true` + `spring.data.redis.*`).
 
-## Known Limitation
-- **Not distributed**: each JVM instance has its own counter. In a multi-pod deployment, limits are per-instance.
-- **Production upgrade path**: Redis-backed rate limiter (e.g., Bucket4j + Redis) or API Gateway (nginx rate limit, Kong, etc.).
+## Consequences
+- Multi-pod deployments enforce a single, shared rate limit.
+- A Redis outage does not take the API down; it temporarily falls back to
+  per-instance limits (documented trade-off: slightly weaker limiting, never a
+  full failure).
 
 ## References
+- `RedisRateLimiter` (Lua fixed window)
 - `RateLimitInterceptor`
 - `WebConfig.addInterceptors()`
-- `application.yml` rate-limit section
+- `docker-compose.prd.yml` (redis service)
+- `application.yml` / `application-prd.yml` rate-limit + spring.data.redis

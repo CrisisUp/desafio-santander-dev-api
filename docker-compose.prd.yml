@@ -1,4 +1,4 @@
-# Production-like stack: real PostgreSQL + Flyway migrations + ETL.
+# Production-like stack: real PostgreSQL + Redis + Flyway migrations + ETL.
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prd.yml up --build
 services:
   postgres:
@@ -16,6 +16,15 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    # Distributed rate limit backing store.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   santander-api:
     environment:
       SPRING_PROFILES_ACTIVE: prd
@@ -24,8 +33,12 @@ services:
       PGDATABASE: santander
       PGUSER: santander
       PGPASSWORD: santander
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:
