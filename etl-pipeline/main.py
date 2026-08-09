@@ -3,6 +3,8 @@ import json
 import os
 from dotenv import load_dotenv
 
+from auth import auth_headers
+
 # Carrega as variáveis do arquivo .env
 load_dotenv()
 
@@ -11,12 +13,15 @@ API_URL = os.getenv('API_URL', 'http://localhost:8080')
 
 PAGE_SIZE = 100
 
+# The API now requires JWT auth.
+HEADERS = auth_headers()
+
 def extract_users():
     """Extrai todos os usuários da API paginada (evita carregar tudo de uma vez)."""
     users = []
     page = 0
     while True:
-        response = requests.get(f'{API_URL}/users', params={'page': page, 'size': PAGE_SIZE})
+        response = requests.get(f'{API_URL}/users', params={'page': page, 'size': PAGE_SIZE}, headers=HEADERS)
         response.raise_for_status()
         data = response.json()
         users.extend(data.get('content', []))

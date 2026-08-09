@@ -1,0 +1,25 @@
+<div class="login-container">
+  <div class="login-card users-card">
+    <h2>Entrar</h2>
+    <p class="login-hint">Use suas credenciais da API.</p>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline">
+        <mat-label>Usuário</mat-label>
+        <mat-icon matPrefix>person</mat-icon>
+        <input matInput formControlName="username" placeholder="devweekerson" autocomplete="username" />
+        <mat-error *ngIf="form.get('username')?.hasError('required') && form.get('username')?.touched">Usuário é obrigatório.</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Senha</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput formControlName="password" type="password" autocomplete="current-password" />
+        <mat-error *ngIf="form.get('password')?.hasError('required') && form.get('password')?.touched">Senha é obrigatória.</mat-error>
+      </mat-form-field>
+      <button mat-raised-button color="primary" type="submit" class="login-btn" [disabled]="form.invalid || loading()">
+        <mat-spinner *ngIf="loading()" diameter="18" class="submit-spinner"></mat-spinner>
+        {{ loading() ? 'Entrando…' : 'Entrar' }}
+      </button>
+    </form>
+    <p class="login-hint demo-hint">Demo: usuário <code>devweekerson</code> / senha <code>admin123</code></p>
+  </div>
+</div>

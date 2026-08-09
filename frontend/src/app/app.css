@@ -45,3 +45,14 @@
   display: block;
   min-height: 100vh;
 }
+
+.nav-user {
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 4px;
+  opacity: 0.9;
+}
+
+.nav-logout {
+  color: inherit;
+}

@@ -1,8 +1,10 @@
 # Canonical OpenAPI spec for the Santander Dev Week API.
-# Mirrors the annotated controllers (UserController, TransactionController) and
-# the actual JSON shapes returned by the Spring Boot app, including:
+# Mirrors the annotated controllers (UserController, TransactionController,
+# AuthController, AuditController) and the actual JSON shapes returned by the
+# Spring Boot app, including:
+#   - JWT auth (POST /auth/login, /auth/register) — Bearer on all other routes
 #   - paged list responses (Spring Page) with page/size/sort query params
-#   - plain-text error bodies (404/422) from GlobalExceptionHandler
+#   - plain-text error bodies (404/422/401/403) from GlobalExceptionHandler
 #   - the /accounts/transactions/summary aggregate endpoint
 # Generated docs (Swagger UI) live at /swagger-ui/index.html from /v3/api-docs;
 # this file is the human-maintained canonical source.
@@ -23,7 +25,97 @@ tags:
   description: RESTful API for managing users.
 - name: Transactions Controller
   description: RESTful API for account statements.
+- name: Auth Controller
+  description: Login and registration (JWT).
+- name: Audit Controller
+  description: Read-only audit log (ADMIN only).
+security:
+- bearerAuth: []
 paths:
+  /auth/login:
+    post:
+      tags:
+      - Auth Controller
+      summary: Authenticate and receive a JWT
+      operationId: login
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/PlainError'
+  /auth/register:
+    post:
+      tags:
+      - Auth Controller
+      summary: Create a new auth user (role USER)
+      operationId: register
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Auth user created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/PlainError'
+  /audit:
+    get:
+      tags:
+      - Audit Controller
+      summary: List audit entries
+      description: Filter by actorId or targetEntity+targetId. ADMIN only.
+      operationId: listAudit
+      parameters:
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: targetEntity
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: targetId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Audit entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogDto'
+        '403':
+          description: Admin role required
+          content:
+            text/plain:
+              schema:
+                type: string
   /users:
     get:
       tags:
@@ -282,7 +374,81 @@ components:
           schema:
             type: string
           example: Too many requests. Try again shortly.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    LoginRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        username:
+          type: string
+          example: devweekerson
+        password:
+          type: string
+          example: admin123
+    RegisterRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        userId:
+          type:
+          - integer
+          - 'null'
+          format: int64
+    AuditLogDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        action:
+          type: string
+          example: TRANSFER
+        actorUserId:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        actorName:
+          type: string
+          example: devweekerson
+        targetEntity:
+          type: string
+          example: tb_transaction
+        targetId:
+          type: integer
+          format: int64
+        details:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     AccountDto:
       type: object
       properties:

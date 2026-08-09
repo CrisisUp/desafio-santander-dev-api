@@ -84,8 +84,7 @@ public class UserServiceImpl implements UserService {
 
         User saved = this.userRepository.save(userToCreate);
 
-        this.auditService.log("CREATE_USER", null, "system",
-                "tb_user", saved.getId(),
+        this.auditService.log("CREATE_USER", "tb_user", saved.getId(),
                 "{\"name\":\"" + saved.getName() + "\"}");
 
         return saved;
@@ -137,8 +136,7 @@ public class UserServiceImpl implements UserService {
 
         User saved = this.userRepository.save(dbUser);
 
-        this.auditService.log("UPDATE_USER", null, "system",
-                "tb_user", saved.getId(),
+        this.auditService.log("UPDATE_USER", "tb_user", saved.getId(),
                 "{\"name\":\"" + saved.getName() + "\"}");
 
         return saved;
@@ -150,8 +148,7 @@ public class UserServiceImpl implements UserService {
         this.validateChangeableId(id, "deleted");
         User dbUser = this.findById(id);
 
-        this.auditService.log("DELETE_USER", null, "system",
-                "tb_user", dbUser.getId(),
+        this.auditService.log("DELETE_USER", "tb_user", dbUser.getId(),
                 "{\"name\":\"" + dbUser.getName() + "\"}");
 
         this.userRepository.delete(dbUser);

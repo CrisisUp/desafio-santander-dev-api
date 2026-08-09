@@ -1,5 +1,7 @@
 package me.dio.service.impl;
 
+import me.dio.config.AuthenticatedUser;
+import me.dio.config.SecurityUtils;
 import me.dio.controller.dto.TransactionRequestDto;
 import me.dio.domain.model.Account;
 import me.dio.domain.model.Transaction;
@@ -80,6 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         try {
+            Long actorUserId = currentActorId();
             return switch (request.type()) {
                 case DEPOSIT -> {
                     // Locked for consistency with debits (a deposit concurrent with a
@@ -87,8 +90,8 @@ public class TransactionServiceImpl implements TransactionService {
                     Account source = this.lockAccount(accountId);
                     source.setBalance(source.getBalance().add(request.amount()));
                     Transaction saved = this.saveWithKey(request.toModel(source), idempotencyKey);
-                    this.auditService.log("CREATE_TRANSACTION", null, "system",
-                            "tb_transaction", saved.getId(),
+                    saved.setCreatedBy(actorUserId);
+                    this.auditService.log("CREATE_TRANSACTION", "tb_transaction", saved.getId(),
                             "{\"type\":\"DEPOSIT\",\"amount\":" + request.amount() + ",\"accountId\":" + accountId + "}");
                     yield saved;
                 }
@@ -97,8 +100,8 @@ public class TransactionServiceImpl implements TransactionService {
                     this.requireFunds(source, request.amount(), request.type());
                     source.setBalance(source.getBalance().subtract(request.amount()));
                     Transaction saved = this.saveWithKey(request.toModel(source), idempotencyKey);
-                    this.auditService.log("CREATE_TRANSACTION", null, "system",
-                            "tb_transaction", saved.getId(),
+                    saved.setCreatedBy(actorUserId);
+                    this.auditService.log("CREATE_TRANSACTION", "tb_transaction", saved.getId(),
                             "{\"type\":\"" + request.type() + "\",\"amount\":" + request.amount() + ",\"accountId\":" + accountId + "}");
                     yield saved;
                 }
@@ -150,6 +153,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         LocalDateTime now = LocalDateTime.now();
 
+        Long actorUserId = currentActorId();
+
         Transaction debit = new Transaction();
         debit.setAccount(source);
         debit.setType(TransactionType.TRANSFER);
@@ -158,6 +163,7 @@ public class TransactionServiceImpl implements TransactionService {
         debit.setCreatedAt(now);
         debit.setCredit(false);
         debit.setIdempotencyKey(idempotencyKey);
+        debit.setCreatedBy(actorUserId);
         this.transactionRepository.save(debit);
 
         Transaction credit = new Transaction();
@@ -170,11 +176,11 @@ public class TransactionServiceImpl implements TransactionService {
         // Same key on the credit leg so a retry scoped to the destination also
         // dedupes; the UNIQUE constraint is per account, so no collision.
         credit.setIdempotencyKey(idempotencyKey);
+        credit.setCreatedBy(actorUserId);
         this.transactionRepository.save(credit);
 
         // Audit the transfer (both legs in one entry)
-        this.auditService.log("TRANSFER", null, "system",
-                "tb_transaction", debit.getId(),
+        this.auditService.log("TRANSFER", "tb_transaction", debit.getId(),
                 "{\"sourceAccountId\":" + source.getId() +
                 ",\"destinationAccountId\":" + destination.getId() +
                 ",\"amount\":" + request.amount() +
@@ -182,6 +188,12 @@ public class TransactionServiceImpl implements TransactionService {
                 ",\"creditTransactionId\":" + credit.getId() + "}");
 
         return debit;
+    }
+
+    /** The authenticated banking user id, or null when unauthenticated. */
+    private Long currentActorId() {
+        AuthenticatedUser actor = SecurityUtils.currentUser();
+        return actor != null ? actor.userId() : null;
     }
 
     private Account lockAccount(Long id) {

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { provideHttpClient } from '@angular/common/http';
 import { App } from './app';
 
 describe('App', () => {
@@ -15,6 +16,7 @@ describe('App', () => {
       declarations: [
         App,
       ],
+      providers: [provideHttpClient()],
     }).compileComponents();
   });
 

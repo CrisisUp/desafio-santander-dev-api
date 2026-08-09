@@ -4,6 +4,12 @@
   <span class="toolbar-spacer"></span>
   <a mat-button routerLink="/users" class="nav-link" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }">Usuários</a>
   <a mat-button routerLink="/dashboard" class="nav-link" routerLinkActive="nav-active">Dashboard</a>
+  <ng-container *ngIf="authService.auth() as session">
+    <span class="nav-user" title="{{ session.role }}">{{ session.username }}</span>
+    <button mat-icon-button class="nav-logout" (click)="logout()" matTooltip="Sair" aria-label="Sair">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </ng-container>
 </mat-toolbar>
 
 <div class="route-host" @routeAnimations>

@@ -3,12 +3,17 @@ import random
 import os
 from dotenv import load_dotenv
 
+from auth import auth_headers
+
 load_dotenv()
 
 # Em vez de API_URL = 'http://localhost:8080/users'
 # Use a variável de ambiente definida no docker-compose
 BASE_URL = os.getenv('API_URL', 'http://localhost:8080')
 API_URL = f"{BASE_URL}/users"
+
+# The API now requires JWT auth. Login once and reuse the header.
+HEADERS = auth_headers()
 
 def existing_account_numbers():
     """Números de conta já cadastrados (inclui o seed do Flyway, ex.: 01.097954-4).
@@ -30,7 +35,7 @@ def existing_account_and_card_numbers():
     card_numbers = set()
     page = 0
     while True:
-        response = requests.get(API_URL, params={'page': page, 'size': 100})
+        response = requests.get(API_URL, params={'page': page, 'size': 100}, headers=HEADERS)
         response.raise_for_status()
         data = response.json()
         account_numbers.update(user['account']['number'] for user in data.get('content', []))
@@ -77,7 +82,7 @@ def populate(quantity):
         if account_number in existing:
             continue  # Idempotente: re-execuções não duplicam contas
 
-        response = requests.post(API_URL, json=create_user(account_number, f"Usuario_Teste_{account_number}", used_cards))
+        response = requests.post(API_URL, json=create_user(account_number, f"Usuario_Teste_{account_number}", used_cards), headers=HEADERS)
         if response.status_code == 201:
             created += 1
             existing.add(account_number)

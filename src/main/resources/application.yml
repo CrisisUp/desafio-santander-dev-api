@@ -18,3 +18,9 @@ cors:
 rate-limit:
   max-requests: 20
   window-seconds: 60
+
+# JWT authentication. The dev secret is fine for local use; MUST be overridden
+# in production (AUTH_JWT_SECRET env var) with a long random value.
+auth:
+  jwt-secret: ${AUTH_JWT_SECRET:dev-only-secret-key-please-change-in-production-0123456789abcdef}
+  jwt-expiration-ms: 86400000

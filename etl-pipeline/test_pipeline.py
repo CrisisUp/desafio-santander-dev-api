@@ -2,7 +2,10 @@
 import os
 from unittest import mock
 
-import main
+# Mock auth_headers BEFORE importing main so the module-level HEADERS doesn't hit
+# the network. The test suite runs offline.
+with mock.patch("auth.auth_headers", return_value={"Authorization": "Bearer test"}):
+    import main
 
 
 def test_transform_user_appends_personalized_message():
@@ -42,7 +45,8 @@ def test_extract_users_returns_json(mock_get):
     users = main.extract_users()
     assert users == [{"id": 1}, {"id": 2}]
     mock_get.assert_called_once_with("http://localhost:8080/users",
-                                     params={"page": 0, "size": main.PAGE_SIZE})
+                                     params={"page": 0, "size": main.PAGE_SIZE},
+                                     headers={"Authorization": "Bearer test"})
 
 
 @mock.patch("main.requests.get")

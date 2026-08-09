@@ -15,6 +15,16 @@
  * /dashboard, ...) never match the regex -> served as index.html.
  */
 export default {
+  '^/auth/(login|register)$': {
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    secure: false,
+  },
+  '^/audit(\\?.*)?$': {
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    secure: false,
+  },
   '^/users(\\?.*)?$|^/users/check(\\?.*)?$|^/users/[0-9]+(\\?.*)?$|^/accounts/[0-9]+/transactions(\\?.*)?$|^/accounts/transactions/summary(\\?.*)?$': {
     target: 'http://localhost:8080',
     changeOrigin: true,

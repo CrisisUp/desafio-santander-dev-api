@@ -2,7 +2,10 @@
 import unittest
 from unittest import mock
 
-import populate_api
+# Mock auth_headers BEFORE importing populate_api so the module-level HEADERS
+# doesn't hit the network. The test suite runs offline.
+with mock.patch("auth.auth_headers", return_value={"Authorization": "Bearer test"}):
+    import populate_api
 
 
 def _page(content, total_pages=1):

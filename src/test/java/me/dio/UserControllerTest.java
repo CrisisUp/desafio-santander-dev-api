@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -28,6 +29,18 @@ class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    /** Logs in as the seeded ADMIN (devweekerson/admin123) and returns the JWT. */
+    private String adminToken() throws Exception {
+        MvcResult res = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"devweekerson\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String body = res.getResponse().getContentAsString();
+        // {"token":"...","username":"...",...}
+        return body.split("\"token\":\"")[1].split("\"")[0];
+    }
 
     @Test
     void checkUniqueness_reportsSeedAccountTaken() throws Exception {
@@ -66,6 +79,7 @@ class UserControllerTest {
     @Test
     void createUser_blankNameIs422() throws Exception {
         mockMvc.perform(post("/users")
+                        .header("Authorization", "Bearer " + adminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -83,6 +97,7 @@ class UserControllerTest {
     void createUser_nullFeaturesIs422() throws Exception {
         // @NotNull on features/news: null is rejected by bean validation.
         mockMvc.perform(post("/users")
+                        .header("Authorization", "Bearer " + adminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -99,6 +114,7 @@ class UserControllerTest {
     @Test
     void createUser_validIs201() throws Exception {
         mockMvc.perform(post("/users")
+                        .header("Authorization", "Bearer " + adminToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
