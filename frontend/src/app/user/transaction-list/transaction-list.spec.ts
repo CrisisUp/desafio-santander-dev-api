@@ -81,10 +81,11 @@ describe('TransactionListComponent', () => {
     expect(comp.form.get('amount')!.valid).toBe(true);
   });
 
-  it('flags insufficient funds before submit for a debit exceeding balance', () => {
+  it('flags insufficient funds before submit for a debit exceeding available balance', () => {
     const fixture = TestBed.createComponent(TransactionListComponent);
     const comp = fixture.componentInstance;
-    // The account header supplies the balance to the validator.
+    // The account header supplies the balance and the cheque-especial limit.
+    // Available = balance + limit = 100 + 500 = 600.
     comp.user.set({
       id: 3,
       name: 'Bruno',
@@ -95,12 +96,16 @@ describe('TransactionListComponent', () => {
     });
     const amount = comp.form.get('amount')!;
 
-    // Debit above balance → insufficient.
-    comp.form.patchValue({ type: 'WITHDRAWAL', amount: 150 });
+    // Debit above available (balance + limit) → insufficient.
+    comp.form.patchValue({ type: 'WITHDRAWAL', amount: 601 });
     expect(amount.hasError('insufficientFunds')).toBe(true);
 
     // Debit within balance → OK.
     comp.form.patchValue({ type: 'WITHDRAWAL', amount: 50 });
+    expect(amount.hasError('insufficientFunds')).toBe(false);
+
+    // Debit within the cheque-especial (balance < amount <= available) → OK.
+    comp.form.patchValue({ type: 'WITHDRAWAL', amount: 150 });
     expect(amount.hasError('insufficientFunds')).toBe(false);
 
     // DEPOSIT is never limited by balance.

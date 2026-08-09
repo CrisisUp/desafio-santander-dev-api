@@ -491,6 +491,13 @@ components:
           type: boolean
           description: true = credit (deposit, or the incoming leg of a transfer); false = debit
           example: true
+        createdBy:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          description: Id of the user who created the transaction (null = system; no auth yet)
+          example: 1
     TransactionRequestDto:
       type: object
       required:

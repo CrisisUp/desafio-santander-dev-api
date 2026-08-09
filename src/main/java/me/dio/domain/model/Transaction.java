@@ -46,6 +46,12 @@ public class Transaction {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // Who created the transaction. Nullable: no auth yet, so rows are created
+    // as "system" (null); a future auth layer fills the authenticated user id.
+    // V13 adds the DB column (seed rows stay null).
+    @Column(name = "created_by")
+    private Long createdBy;
+
     // Idempotency-Key header from the creating request, so a duplicate-click or
     // retry with the same key returns the original transaction instead of
     // debiting twice. UNIQUE (account_id, idempotency_key) in V8.
@@ -120,5 +126,13 @@ public class Transaction {
 
     public void setIdempotencyKey(String idempotencyKey) {
         this.idempotencyKey = idempotencyKey;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
     }
 }
