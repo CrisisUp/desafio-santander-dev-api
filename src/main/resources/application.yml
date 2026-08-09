@@ -9,6 +9,13 @@ spring:
   jpa:
     open-in-view: false
 
+# Redis is infrastructure for the distributed rate limiter; its availability
+# must not fail the app's health endpoint (the limiter falls back to in-memory).
+management:
+  health:
+    redis:
+      enabled: false
+
 # CORS is restricted to the Angular dev server by default.
 cors:
   allowed-origins: http://localhost:4200
